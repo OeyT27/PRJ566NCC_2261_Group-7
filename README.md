@@ -1,10 +1,6 @@
 # PRJ566NCC_2261_Group-7
-# Group Members
-- Theodore Oey
-- Abdalla Abdelgadir
-- Venu Burri
-- Hatim Huned Materwala
-- Maisha Maliha Nava
+# Project Name
+ConnectHub
 
 # Project Summary
 Background
@@ -23,3 +19,9 @@ Scope
 
 Justification
 
+# Group Members
+- Theodore Oey
+- Abdalla Abdelgadir
+- Venu Burri
+- Hatim Huned Materwala
+- Maisha Maliha Nava

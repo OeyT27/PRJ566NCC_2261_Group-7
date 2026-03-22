@@ -1,6 +1,6 @@
 ConnectHub Acceptance Criteria
 
-- **Identity and Access**
+1. **Identity and Access**
 
 - **Registration and verification**: User must be able to create and verify the account via email; account remains unactive until verified
 - **Secure Access:** Users must be able to login to their account or be able to reset password

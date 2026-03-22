@@ -1,10 +1,9 @@
 ConnectHub Acceptance Criteria
 
 1. **Identity and Access**
-
-  - *Registration and verification*: User must be able to create and verify the account via email; account remains unactive until verified
-  - *Secure Access:* Users must be able to login to their account or be able to reset password
-  - *Session Integrity:* System must support persistent login across app restarts but allow for a complete session termination upon manual logout
+*Registration and verification*: User must be able to create and verify the account via email; account remains unactive until verified
+*Secure Access:* Users must be able to login to their account or be able to reset password
+*Session Integrity:* System must support persistent login across app restarts but allow for a complete session termination upon manual logout
 
 2. **Career Navigation (Profile and Pathway)**
 

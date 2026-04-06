@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ConnectHub — UI Prototype</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: #070b15;
+  display:flex; flex-direction:column;
+  justify-content:center; align-items:center;
+  min-height:100vh;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  padding:20px 0;
+}
+.device {
+  width:375px; height:812px;
+  background:#111827; border-radius:44px;
+  overflow:hidden; position:relative;
+  box-shadow:0 40px 80px rgba(0,0,0,0.85),inset 0 0 0 2px #1e2a42;
+  flex-shrink:0;
+}
+.screen {
+  display:none; width:100%; height:100%;
+  flex-direction:column; overflow:hidden;
+  position:absolute; top:0; left:0;
+  animation:fadeIn .22s ease;
+}
+.screen.active { display:flex; }
+@keyframes fadeIn { from{opacity:0;transform:translateX(8px)} to{opacity:1;transform:translateX(0)} }
+.scroll-content { flex:1; overflow-y:auto; scrollbar-width:none; }
+.scroll-content::-webkit-scrollbar { display:none; }
+
+/* STATUS BAR */
+.status-bar {
+  padding:12px 24px 4px; display:flex;
+  justify-content:space-between; align-items:center;
+  font-size:12px; color:rgba(255,255,255,.9);
+  font-weight:600; position:relative; z-index:10; flex-shrink:0;
+}
+.status-bar .time { font-size:15px; font-weight:700; }
+
+/* BOTTOM NAV */
+.bottom-nav {
+  height:70px; background:#0e1828;
+  border-top:1px solid rgba(255,255,255,.05);
+  display:flex; justify-content:space-around; align-items:center;
+  padding:0 8px 8px; flex-shrink:0;
+}
+.nav-item {
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+  cursor:pointer; padding:6px 10px; border-radius:12px;
+  transition:all .2s; border:none; background:transparent;
+}
+.nav-item:hover { background:rgba(255,255,255,.04); }
+.nav-icon { font-size:20px; color:#3d4f66; transition:color .2s; }
+.nav-label { font-size:10px; color:#3d4f66; transition:color .2s; font-weight:600; }
+.nav-item.active .nav-icon,
+.nav-item.active .nav-label { color:#5B8FE8; }
+
+/* TOKENS */
+:root {
+  --bg:#0d1424; --card:#16213a; --card2:#1b2a46;
+  --accent:#5B8FE8; --green:#34C78A; --orange:#F59E0B;
+  --red:#EF4444; --purple:#9b59b6;
+  --t1:#fff; --t2:#8892a4; --t3:#3d4f66;
+  --border:rgba(255,255,255,.06);
+}
+
+/* SPLASH */
+#screen-splash { background:linear-gradient(160deg,#0a1020 0%,#0d1f44 55%,#0a1828 100%); }
+.splash-orb {
+  position:absolute; width:320px; height:320px;
+  background:radial-gradient(circle,rgba(91,143,232,.15) 0%,transparent 70%);
+  border-radius:50%; top:80px; left:50%; transform:translateX(-50%);
+}
+.splash-body {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:40px 32px; position:relative; z-index:2;
+}
+.logo-box {
+  width:84px; height:84px;
+  background:linear-gradient(135deg,#5B8FE8,#3a6fd4);
+  border-radius:24px; display:flex; align-items:center;
+  justify-content:center; font-size:38px; margin-bottom:22px;
+  box-shadow:0 20px 40px rgba(91,143,232,.3);
+}
+.app-title { font-size:38px; font-weight:800; color:#fff; margin-bottom:10px; letter-spacing:-.5px; }
+.app-title span { color:#5B8FE8; }
+.app-sub { font-size:15px; color:#8892a4; text-align:center; line-height:1.5; margin-bottom:48px; }
+.btn-white {
+  width:100%; background:#fff; color:#0d1424;
+  border:none; padding:16px; border-radius:14px;
+  font-size:16px; font-weight:700; cursor:pointer;
+  transition:all .2s; margin-bottom:12px;
+}
+.btn-white:hover { background:#e8f0ff; transform:scale(.98); }
+.social-row { display:flex; gap:10px; width:100%; margin-bottom:12px; }
+.btn-social {
+  flex:1; background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1);
+  color:#fff; padding:13px; border-radius:12px;
+  font-size:13px; font-weight:600; cursor:pointer;
+  transition:all .2s; display:flex; align-items:center; justify-content:center; gap:6px;
+}
+.btn-social:hover { background:rgba(255,255,255,.1); }
+.divider { color:#3d4f66; font-size:13px; margin-bottom:12px; }
+.btn-outline {
+  width:100%; background:transparent;
+  border:1.5px solid rgba(255,255,255,.18);
+  color:#fff; padding:15px; border-radius:14px;
+  font-size:16px; font-weight:600; cursor:pointer; transition:all .2s;
+}
+.btn-outline:hover { border-color:rgba(255,255,255,.35); }
+.dots { display:flex; gap:6px; justify-content:center; margin-top:22px; }
+.dot { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.18); }
+.dot.on { width:20px; border-radius:99px; background:#5B8FE8; }
+
+/* ONBOARDING */
+#screen-onboard { background:var(--bg); }
+.ob-header {
+  padding:14px 22px; display:flex; align-items:center; gap:12px; flex-shrink:0;
+}
+.back-btn {
+  width:36px; height:36px; background:rgba(255,255,255,.06);
+  border:none; border-radius:10px; color:#fff; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; transition:background .2s; flex-shrink:0;
+}
+.back-btn:hover { background:rgba(255,255,255,.12); }
+.prog-wrap { flex:1; height:4px; background:rgba(255,255,255,.08); border-radius:99px; overflow:hidden; }
+.prog-fill { height:100%; background:linear-gradient(90deg,#5B8FE8,#34C78A); border-radius:99px; transition:width .4s; }
+.prog-lbl { font-size:12px; color:#8892a4; font-weight:600; }
+.ob-body { padding:8px 22px 24px; }
+.ob-step { font-size:11px; color:var(--accent); font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:6px; }
+.ob-title { font-size:26px; font-weight:800; color:#fff; margin-bottom:5px; line-height:1.2; }
+.ob-sub { font-size:14px; color:#8892a4; margin-bottom:24px; }
+.fl { font-size:12px; font-weight:700; color:#8892a4; margin-bottom:7px; display:block; letter-spacing:.5px; }
+.fg { margin-bottom:16px; }
+.fi {
+  width:100%; background:var(--card);
+  border:1.5px solid rgba(255,255,255,.08); border-radius:12px;
+  padding:12px 14px; color:#fff; font-size:14px;
+  outline:none; transition:border-color .2s; appearance:none; cursor:pointer;
+}
+.fi:focus { border-color:var(--accent); }
+.row2 { display:flex; gap:10px; }
+.row2 .fg { flex:1; }
+.chips { display:flex; flex-wrap:wrap; gap:7px; }
+.chip {
+  padding:8px 14px; border-radius:99px;
+  border:1.5px solid rgba(255,255,255,.1);
+  background:transparent; color:#8892a4;
+  font-size:13px; font-weight:600; cursor:pointer; transition:all .2s;
+}
+.chip:hover { border-color:var(--accent); color:var(--accent); }
+.chip.sel { background:rgba(91,143,232,.14); border-color:var(--accent); color:var(--accent); }
+.chip.sel-g { background:rgba(52,199,138,.14); border-color:var(--green); color:var(--green); }
+.btn-cta {
+  width:100%; background:linear-gradient(135deg,#5B8FE8,#3a6fd4);
+  border:none; color:#fff; padding:16px; border-radius:14px;
+  font-size:16px; font-weight:700; cursor:pointer; margin-top:18px;
+  transition:all .2s; display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.btn-cta:hover { opacity:.9; transform:scale(.98); }
+
+/* CULTURE SELECTOR PILL */
+.culture-pill {
+  display:flex; align-items:center; gap:7px;
+  background:rgba(91,143,232,.1); border:1.5px solid rgba(91,143,232,.25);
+  border-radius:99px; padding:6px 14px 6px 10px;
+  font-size:13px; font-weight:700; color:var(--accent); cursor:pointer;
+  transition:all .2s;
+}
+.culture-pill:hover { background:rgba(91,143,232,.18); }
+.culture-pill .flag { font-size:17px; }
+
+/* PAGE HEADER */
+.ph { padding:10px 20px 6px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0; }
+.pt { font-size:22px; font-weight:800; color:#fff; }
+.flt-btn {
+  background:var(--card); border:none; color:#8892a4;
+  border-radius:10px; padding:8px 14px; font-size:13px; font-weight:600;
+  cursor:pointer; display:flex; align-items:center; gap:6px; transition:all .2s;
+}
+.flt-btn:hover { background:var(--card2); color:#fff; }
+
+/* TABS */
+.tabs { padding:0 20px; overflow-x:auto; scrollbar-width:none; display:flex; gap:7px; margin-bottom:14px; flex-shrink:0; }
+.tabs::-webkit-scrollbar { display:none; }
+.tb {
+  padding:8px 16px; border-radius:99px;
+  border:1.5px solid rgba(255,255,255,.09);
+  background:transparent; color:#8892a4;
+  font-size:13px; font-weight:600; cursor:pointer;
+  white-space:nowrap; transition:all .2s; flex-shrink:0;
+}
+.tb:hover { border-color:rgba(91,143,232,.4); color:#fff; }
+.tb.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+.tb.cultural-tab { border-color:rgba(255,193,7,.25); color:#FFC107; }
+.tb.cultural-tab.on { background:linear-gradient(135deg,#e6a800,#f59e0b); border-color:#f59e0b; color:#fff; }
+
+/* SECTION LABEL */
+.sec-lbl {
+  padding:0 20px; font-size:13px; font-weight:700;
+  color:#8892a4; margin-bottom:10px; display:flex; align-items:center; gap:6px;
+}
+.sec-lbl .hl { color:var(--accent); }
+
+/* CULTURAL MATCH BANNER */
+.cult-banner {
+  margin:0 20px 14px;
+  background:linear-gradient(135deg,rgba(255,193,7,.1) 0%,rgba(255,152,0,.08) 100%);
+  border:1.5px solid rgba(255,193,7,.2);
+  border-radius:16px; padding:14px 16px;
+  display:flex; align-items:center; gap:12px; cursor:pointer;
+  transition:all .2s;
+}
+.cult-banner:hover { border-color:rgba(255,193,7,.4); }
+.cult-banner-icon { font-size:28px; }
+.cult-banner-info { flex:1; }
+.cult-banner-title { font-size:14px; font-weight:700; color:#fff; margin-bottom:3px; }
+.cult-banner-sub { font-size:12px; color:#8892a4; }
+.cult-arrow { font-size:18px; color:#F59E0B; }
+
+/* JOB CARD */
+.jc {
+  background:var(--card); border-radius:16px;
+  margin:0 20px 10px; padding:16px;
+  border:1px solid var(--border); cursor:pointer; transition:all .2s;
+}
+.jc:hover { border-color:rgba(91,143,232,.22); transform:translateY(-1px); }
+.jc.cultural-match { border-color:rgba(255,193,7,.2); background:linear-gradient(135deg,#16213a 0%,#1a2a3a 100%); }
+.jc.cultural-match:hover { border-color:rgba(255,193,7,.4); }
+.jc-head { display:flex; gap:10px; align-items:flex-start; margin-bottom:10px; }
+.co-logo {
+  width:42px; height:42px; border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:19px; flex-shrink:0;
+}
+.jc-info { flex:1; }
+.jt { font-size:15px; font-weight:700; color:#fff; margin-bottom:2px; }
+.jco { font-size:12px; color:#8892a4; }
+.bk {
+  background:none; border:none; font-size:20px; cursor:pointer;
+  color:#3d4f66; transition:color .2s; padding:2px;
+}
+.bk:hover,.bk.saved { color:var(--accent); }
+.tags { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+.tag { font-size:11px; font-weight:700; padding:4px 10px; border-radius:99px; }
+.t-blue { background:rgba(91,143,232,.12); color:var(--accent); }
+.t-green { background:rgba(52,199,138,.12); color:var(--green); }
+.t-orange { background:rgba(245,158,11,.12); color:var(--orange); }
+.t-purple { background:rgba(155,89,182,.12); color:var(--purple); }
+.t-gray { background:rgba(255,255,255,.06); color:#8892a4; }
+.t-gold { background:rgba(255,193,7,.12); color:#FFC107; border:1px solid rgba(255,193,7,.2); }
+.t-red { background:rgba(239,68,68,.1); color:#EF4444; }
+.jc-foot {
+  display:flex; justify-content:space-between; align-items:center;
+  border-top:1px solid var(--border); padding-top:10px;
+}
+.sal { font-size:14px; font-weight:700; color:#fff; }
+.posted { font-size:11px; color:#3d4f66; }
+.apply-btn {
+  background:linear-gradient(135deg,#5B8FE8,#3a6fd4);
+  border:none; color:#fff; padding:8px 16px;
+  border-radius:10px; font-size:13px; font-weight:700;
+  cursor:pointer; transition:all .2s;
+}
+.apply-btn:hover { opacity:.9; }
+.apply-btn:active { transform:scale(.96); }
+
+/* CULTURAL MATCH SCORE */
+.cmatch {
+  display:flex; align-items:center; gap:5px;
+  font-size:11px; font-weight:700; color:#FFC107; margin-bottom:8px;
+}
+.cmatch-bar { flex:1; height:3px; background:rgba(255,255,255,.08); border-radius:99px; overflow:hidden; }
+.cmatch-fill { height:100%; background:linear-gradient(90deg,#f59e0b,#FFC107); border-radius:99px; }
+
+/* EVENTS */
+#screen-events { background:var(--bg); }
+.loc-row { padding:2px 20px 12px; font-size:13px; color:#8892a4; display:flex; align-items:center; gap:5px; flex-shrink:0; }
+.loc-row b { color:#fff; }
+.ev-card { margin:0 20px 10px; border-radius:16px; overflow:hidden; cursor:pointer; transition:transform .2s; border:1px solid var(--border); }
+.ev-card:hover { transform:translateY(-1px); border-color:rgba(91,143,232,.22); }
+.ev-card.cult-ev { border-color:rgba(255,193,7,.22); }
+.ev-card.cult-ev:hover { border-color:rgba(255,193,7,.45); }
+.ev-feat {
+  padding:20px;
+  background:linear-gradient(135deg,#1b3060 0%,#2a4a90 100%);
+}
+.ev-feat.cult-feat { background:linear-gradient(135deg,#2a1a0a 0%,#3d2a10 50%,#1f1a08 100%); }
+.ev-week { background:rgba(91,143,232,.2); color:var(--accent); font-size:11px; font-weight:700; padding:4px 10px; border-radius:99px; display:inline-block; margin-bottom:12px; }
+.ev-week.cult-week { background:rgba(255,193,7,.15); color:#FFC107; }
+.ev-title { font-size:19px; font-weight:800; color:#fff; margin-bottom:8px; line-height:1.2; }
+.ev-meta { display:flex; gap:14px; align-items:center; margin-bottom:14px; }
+.ev-mi { font-size:12px; color:rgba(255,255,255,.65); display:flex; align-items:center; gap:4px; }
+.reg-btn {
+  background:#fff; color:#1a2236; border:none;
+  padding:10px 22px; border-radius:10px;
+  font-size:13px; font-weight:700; cursor:pointer; transition:all .2s;
+}
+.reg-btn.gold { background:linear-gradient(135deg,#f59e0b,#fbbf24); color:#1a0e00; }
+.reg-btn:hover { opacity:.9; }
+.ev-sm { background:var(--card); padding:14px 16px; display:flex; gap:12px; align-items:center; }
+.ev-sm.cult-sm { background:linear-gradient(135deg,#1a1508,#211c0a); }
+.ev-date-box {
+  width:46px; height:52px; border-radius:12px;
+  background:rgba(91,143,232,.1); border:1px solid rgba(91,143,232,.18);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0;
+}
+.ev-date-box.gold-box { background:rgba(255,193,7,.1); border-color:rgba(255,193,7,.2); }
+.ev-mon { font-size:10px; font-weight:700; color:var(--accent); text-transform:uppercase; }
+.ev-mon.gold-text { color:#FFC107; }
+.ev-day { font-size:20px; font-weight:800; color:#fff; line-height:1; }
+.ev-si { flex:1; }
+.ev-st { font-size:14px; font-weight:700; color:#fff; margin-bottom:3px; }
+.ev-ss { font-size:12px; color:#8892a4; }
+.ev-stags { display:flex; gap:5px; margin-top:5px; flex-wrap:wrap; }
+.int-btn {
+  background:none; border:1.5px solid rgba(255,255,255,.09);
+  color:#8892a4; padding:7px 13px; border-radius:10px;
+  font-size:13px; font-weight:700; cursor:pointer; transition:all .2s;
+}
+.int-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+/* DASHBOARD */
+#screen-dashboard { background:var(--bg); }
+.dash-hd { padding:8px 20px 0; flex-shrink:0; }
+.greet { font-size:13px; color:#8892a4; margin-bottom:2px; }
+.name-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.uname { font-size:22px; font-weight:800; color:#fff; }
+.hd-btns { display:flex; gap:8px; }
+.ic-btn {
+  width:40px; height:40px; background:var(--card); border-radius:12px;
+  border:none; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  font-size:18px; position:relative; transition:background .2s;
+}
+.ic-btn:hover { background:var(--card2); }
+.nb { position:absolute; top:7px; right:7px; width:8px; height:8px; background:#5B8FE8; border-radius:50%; border:1.5px solid var(--bg); }
+.av-btn {
+  width:40px; height:40px; border-radius:12px; border:none; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; font-weight:700; color:#fff;
+  background:linear-gradient(135deg,#5B8FE8,#9b59b6);
+}
+.srch {
+  display:flex; align-items:center; gap:10px;
+  background:var(--card); border-radius:14px;
+  padding:12px 16px; margin:0 20px 16px;
+  border:1.5px solid transparent; cursor:text; transition:border-color .2s;
+}
+.srch:focus-within { border-color:rgba(91,143,232,.28); }
+.srch input { background:transparent; border:none; outline:none; color:#fff; font-size:14px; flex:1; }
+.srch input::placeholder { color:#3d4f66; }
+.prog-card {
+  margin:0 20px 18px;
+  background:linear-gradient(135deg,#1b3464 0%,#264a8c 55%,#182d5c 100%);
+  border-radius:20px; padding:20px; position:relative; overflow:hidden;
+  border:1px solid rgba(91,143,232,.2); cursor:pointer;
+}
+.prog-card::before {
+  content:''; position:absolute; right:-20px; top:-20px;
+  width:140px; height:140px;
+  background:radial-gradient(circle,rgba(91,143,232,.2) 0%,transparent 70%);
+  border-radius:50%;
+}
+.pc-lbl { font-size:11px; color:rgba(255,255,255,.55); font-weight:600; margin-bottom:5px; }
+.pc-title { font-size:20px; font-weight:800; color:#fff; margin-bottom:14px; }
+.pc-track { height:6px; background:rgba(255,255,255,.14); border-radius:99px; overflow:hidden; margin-bottom:8px; }
+.pc-fill { height:100%; background:linear-gradient(90deg,#34C78A,#5B8FE8); border-radius:99px; }
+.pc-foot { display:flex; justify-content:space-between; font-size:13px; color:rgba(255,255,255,.7); }
+.pc-foot b { color:#34C78A; }
+.stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 20px; margin-bottom:18px; }
+.sc {
+  background:var(--card); border-radius:16px; padding:16px;
+  border:1px solid var(--border); cursor:pointer; transition:all .2s;
+}
+.sc:hover { background:var(--card2); border-color:rgba(91,143,232,.18); }
+.sc-icon { font-size:20px; margin-bottom:7px; }
+.sc-num { font-size:28px; font-weight:800; color:#fff; margin-bottom:2px; }
+.sc-lbl { font-size:12px; color:#8892a4; }
+.section-title { font-size:17px; font-weight:800; color:#fff; padding:0 20px; margin-bottom:12px; }
+.act-item {
+  display:flex; align-items:center; gap:12px;
+  background:var(--card); border-radius:14px;
+  padding:14px; margin:0 20px 8px;
+  border:1px solid var(--border); cursor:pointer; transition:all .2s;
+}
+.act-item:hover { border-color:rgba(91,143,232,.18); }
+.act-ic { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.act-inf { flex:1; }
+.act-t { font-size:14px; font-weight:600; color:#fff; margin-bottom:2px; }
+.act-s { font-size:12px; color:#8892a4; }
+.badge { font-size:11px; font-weight:700; padding:4px 10px; border-radius:99px; }
+.b-pend { background:rgba(245,158,11,.14); color:var(--orange); }
+.b-done { background:rgba(52,199,138,.14); color:var(--green); }
+.b-prog { background:rgba(91,143,232,.14); color:var(--accent); }
+
+/* PATHWAY */
+#screen-pathways { background:var(--bg); }
+.pw-card {
+  background:var(--card); border-radius:16px;
+  margin:0 20px 10px; border:1px solid var(--border);
+  overflow:hidden; transition:all .2s; cursor:pointer;
+}
+.pw-card:hover { border-color:rgba(91,143,232,.22); transform:translateY(-1px); }
+.pw-head { padding:16px; display:flex; gap:12px; align-items:flex-start; }
+.pw-ic { width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg,#1b3464,#264a8c); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+.pw-inf { flex:1; }
+.pw-t { font-size:15px; font-weight:700; color:#fff; margin-bottom:4px; }
+.pw-s { font-size:12px; color:#8892a4; }
+.br { font-size:11px; font-weight:700; padding:3px 9px; border-radius:99px; }
+.br-g { background:rgba(52,199,138,.14); color:var(--green); }
+.br-o { background:rgba(245,158,11,.1); color:var(--orange); }
+.pw-steps { padding:0 16px 16px; }
+.st-item { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+.sn { width:24px; height:24px; border-radius:50%; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.sn-done { background:var(--green); color:#fff; }
+.sn-act { background:var(--accent); color:#fff; }
+.sn-pend { background:rgba(255,255,255,.07); color:#3d4f66; }
+.sl { font-size:13px; color:#8892a4; flex:1; }
+.sb { font-size:10px; font-weight:700; padding:3px 8px; border-radius:99px; }
+.sb-done { background:rgba(52,199,138,.1); color:var(--green); }
+.sb-ip { background:rgba(91,143,232,.1); color:var(--accent); }
+.pw-desc { padding:12px 16px; background:rgba(255,255,255,.025); font-size:12px; color:#8892a4; border-top:1px solid var(--border); line-height:1.5; }
+
+/* PROFILE */
+#screen-profile { background:var(--bg); }
+.prof-hero { background:linear-gradient(160deg,#162440,#0d1424); padding:28px 20px 22px; display:flex; flex-direction:column; align-items:center; }
+.av-lg {
+  width:80px; height:80px; border-radius:24px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:24px; font-weight:700; color:#fff; margin-bottom:12px;
+  box-shadow:0 12px 30px rgba(91,143,232,.3);
+  background:linear-gradient(135deg,#5B8FE8,#9b59b6);
+}
+.prof-name { font-size:22px; font-weight:800; color:#fff; margin-bottom:4px; }
+.prof-role { font-size:14px; color:#8892a4; margin-bottom:12px; }
+.prof-tags { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; }
+.ptag { background:rgba(255,255,255,.07); color:rgba(255,255,255,.8); font-size:11px; padding:4px 10px; border-radius:99px; font-weight:600; }
+.ptag.cult-tag { background:rgba(255,193,7,.1); color:#FFC107; border:1px solid rgba(255,193,7,.2); }
+.prof-stats { display:flex; background:var(--card); margin:0 20px; border-radius:16px; border:1px solid var(--border); overflow:hidden; }
+.ps { flex:1; text-align:center; padding:16px 8px; border-right:1px solid var(--border); }
+.ps:last-child { border-right:none; }
+.ps-num { font-size:22px; font-weight:800; color:#fff; }
+.ps-lbl { font-size:11px; color:#8892a4; }
+.sk-sec { padding:16px 20px 0; }
+.sk-hd { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.ed-btn { background:rgba(91,143,232,.1); border:none; color:var(--accent); padding:6px 14px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; transition:all .2s; }
+.ed-btn:hover { background:rgba(91,143,232,.18); }
+.sk-item { margin-bottom:12px; }
+.sk-row { display:flex; justify-content:space-between; margin-bottom:5px; }
+.sk-n { font-size:13px; font-weight:600; color:rgba(255,255,255,.85); }
+.sk-p { font-size:13px; color:#8892a4; }
+.sk-tr { height:5px; background:rgba(255,255,255,.06); border-radius:99px; overflow:hidden; }
+.sk-f { height:100%; background:linear-gradient(90deg,#5B8FE8,#34C78A); border-radius:99px; }
+.pref-sec { padding:16px 20px; }
+.pref-item {
+  display:flex; align-items:center; gap:12px;
+  background:var(--card); border-radius:14px;
+  padding:14px 16px; margin-bottom:8px;
+  cursor:pointer; transition:all .2s; border:1px solid var(--border);
+}
+.pref-item:hover { border-color:rgba(91,143,232,.18); }
+.pi-ic { font-size:20px; width:36px; }
+.pi-lbl { flex:1; font-size:14px; font-weight:600; color:#fff; }
+.pi-arr { font-size:16px; color:#3d4f66; }
+.pref-item.so { background:rgba(239,68,68,.04); border-color:rgba(239,68,68,.09); }
+.pref-item.so .pi-lbl { color:var(--red); }
+
+/* NOTIFICATIONS */
+#screen-notifications { background:var(--bg); }
+.nh { padding:12px 20px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0; }
+.mar-btn { background:none; border:none; color:var(--accent); font-size:13px; font-weight:600; cursor:pointer; }
+.ns-lbl { padding:4px 20px 10px; font-size:11px; color:#3d4f66; font-weight:700; text-transform:uppercase; letter-spacing:.8px; }
+.ni { display:flex; gap:12px; padding:14px 20px; cursor:pointer; transition:background .2s; position:relative; border-bottom:1px solid var(--border); }
+.ni:hover { background:rgba(255,255,255,.025); }
+.ni.unread { background:rgba(91,143,232,.04); }
+.ni-dot { position:absolute; right:20px; top:50%; transform:translateY(-50%); width:8px; height:8px; border-radius:50%; background:var(--accent); }
+.ni-iw { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+.ni-inf { flex:1; }
+.ni-t { font-size:14px; color:rgba(255,255,255,.88); line-height:1.4; margin-bottom:3px; }
+.ni-t b { color:#fff; }
+.ni-s { font-size:11px; color:#3d4f66; }
+
+/* TOAST */
+.toast {
+  position:fixed; bottom:100px; left:50%; transform:translateX(-50%) translateY(16px);
+  background:#34C78A; color:#fff; padding:12px 22px;
+  border-radius:99px; font-size:14px; font-weight:700;
+  opacity:0; transition:all .28s; z-index:9999; white-space:nowrap;
+  box-shadow:0 8px 24px rgba(52,199,138,.3); pointer-events:none;
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* DEMO SWITCHER */
+.demo-switcher {
+  margin-top:18px;
+  background:#0d1424; border-radius:20px; padding:16px 20px;
+  border:1px solid rgba(91,143,232,.15);
+  width:375px;
+}
+.ds-label { font-size:12px; font-weight:700; color:#8892a4; text-transform:uppercase; letter-spacing:.8px; margin-bottom:12px; }
+.ds-row { display:flex; flex-wrap:wrap; gap:7px; }
+.ds-btn {
+  padding:7px 14px; border-radius:99px;
+  border:1.5px solid rgba(255,255,255,.1);
+  background:transparent; color:#8892a4;
+  font-size:13px; font-weight:600; cursor:pointer;
+  white-space:nowrap; transition:all .2s;
+}
+.ds-btn:hover { border-color:rgba(255,193,7,.4); color:#FFC107; }
+.ds-btn.ds-on { background:rgba(255,193,7,.12); border-color:#FFC107; color:#FFC107; }
+</style>
+</head>
+<body>
+
+<div class="device">
+
+<!-- ===================== SPLASH ===================== -->
+<div id="screen-splash" class="screen active">
+  <div class="status-bar"><span class="time">9:41</span><span>📶🔋</span></div>
+  <div class="splash-orb"></div>
+  <div class="splash-body">
+    <div class="logo-box" style="background:transparent;box-shadow:none;padding:0;width:96px;height:96px">
+      <svg viewBox="0 0 200 200" width="96" height="96" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#2a1a6e"/>
+            <stop offset="100%" stop-color="#160d40"/>
+          </radialGradient>
+          <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#3ab8e0"/>
+            <stop offset="50%" stop-color="#2480c8"/>
+            <stop offset="100%" stop-color="#1a5ca8"/>
+          </linearGradient>
+          <linearGradient id="swooshGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#34d4b8"/>
+            <stop offset="100%" stop-color="#2ab0e0"/>
+          </linearGradient>
+          <linearGradient id="starGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#ffe566"/>
+            <stop offset="100%" stop-color="#f5a623"/>
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <!-- Background circle -->
+        <circle cx="100" cy="100" r="98" fill="url(#bgGrad)" stroke="#3a2a80" stroke-width="2"/>
+        <!-- Concentric rings -->
+        <circle cx="100" cy="100" r="88" fill="none" stroke="rgba(80,60,160,0.4)" stroke-width="1"/>
+        <circle cx="100" cy="100" r="75" fill="none" stroke="rgba(80,60,160,0.3)" stroke-width="1"/>
+        <circle cx="100" cy="100" r="60" fill="none" stroke="rgba(80,60,160,0.2)" stroke-width="1"/>
+        <!-- Maple Leaf path -->
+        <g transform="translate(100,108) scale(0.72)" filter="url(#glow)">
+          <path d="M0,-68 L8,-42 L20,-50 L14,-30 L30,-34 L22,-18 L38,-18 L28,0 L14,0 L18,30 L-18,30 L-14,0 L-28,0 L-38,-18 L-22,-18 L-30,-34 L-14,-30 L-20,-50 L-8,-42 Z" fill="url(#leafGrad)" stroke="#1a4a8a" stroke-width="2"/>
+          <!-- Stem -->
+          <rect x="-5" y="28" width="10" height="20" fill="url(#leafGrad)" rx="3"/>
+        </g>
+        <!-- Swoosh arc -->
+        <path d="M 32,130 Q 60,90 100,80 Q 140,70 168,90" fill="none" stroke="url(#swooshGrad)" stroke-width="5" stroke-linecap="round" opacity="0.9"/>
+        <path d="M 28,138 Q 58,96 100,86 Q 142,76 172,98" fill="none" stroke="rgba(52,212,184,0.35)" stroke-width="3" stroke-linecap="round"/>
+        <!-- Star at top -->
+        <g transform="translate(126,34)" filter="url(#glow)">
+          <polygon points="0,-14 3.6,-5 13,-5 5.8,1 8.6,11 0,5.6 -8.6,11 -5.8,1 -13,-5 -3.6,-5" fill="url(#starGrad)" stroke="#c47800" stroke-width="1.2"/>
+        </g>
+        <!-- Shine on leaf -->
+        <ellipse cx="90" cy="92" rx="10" ry="6" fill="rgba(255,255,255,0.15)" transform="rotate(-20,90,92)"/>
+      </svg>
+    </div>
+    <h1 class="app-title">Connect<span>Hub</span></h1>
+    <p class="app-sub">Your personalized career guide for newcomers in Canada</p>
+    <button class="btn-white" onclick="go('screen-onboard')">Create Free Account</button>
+    <div class="social-row">
+      <button class="btn-social" onclick="toast('Signing in with Google…')">🔵 Google</button>
+      <button class="btn-social" onclick="toast('Signing in with LinkedIn…')">🔗 LinkedIn</button>
+    </div>
+    <p class="divider">or continue with</p>
+    <button class="btn-outline" onclick="go('screen-dashboard')">Sign In</button>
+    <div class="dots"><div class="dot on"></div><div class="dot"></div><div class="dot"></div></div>
+  </div>
+</div>
+
+<!-- ===================== ONBOARDING ===================== -->
+<div id="screen-onboard" class="screen">
+  <div class="status-bar" style="background:var(--bg)"><span class="time">9:41</span><span>📶🔋</span></div>
+  <div class="ob-header">
+    <button class="back-btn" onclick="go('screen-splash')">←</button>
+    <div class="prog-wrap"><div class="prog-fill" style="width:50%"></div></div>
+    <span class="prog-lbl">2 of 4</span>
+  </div>
+  <div class="ob-body scroll-content">
+    <div class="ob-step">Step 2 of 4</div>
+    <h2 class="ob-title">Tell us about<br>your background</h2>
+    <p class="ob-sub">We'll personalize jobs, events &amp; pathways to your culture &amp; language.</p>
+
+    <div class="fg">
+      <label class="fl">YOUR FIELD</label>
+      <select class="fi">
+        <option>🏗️ Civil Engineering</option>
+        <option>💻 Software Development</option>
+        <option>🏥 Healthcare / Nursing</option>
+        <option>📊 Finance / Accounting</option>
+        <option>⚖️ Law / Legal</option>
+      </select>
+    </div>
+
+    <div class="row2">
+      <div class="fg">
+        <label class="fl">EXPERIENCE</label>
+        <select class="fi">
+          <option>6 years</option><option>1-2 years</option>
+          <option>3-5 years</option><option>10+ years</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="fl">ORIGIN COUNTRY</label>
+        <select class="fi" onchange="onboardCultureChange(this)">
+          <option value="india">🇮🇳 India</option>
+          <option value="china">🇨🇳 China</option>
+          <option value="pakistan">🇵🇰 Pakistan</option>
+          <option value="arab">🇸🇦 Arab Countries</option>
+          <option value="philippines">🇵🇭 Philippines</option>
+          <option value="nigeria">🇳🇬 Nigeria</option>
+          <option value="france">🇫🇷 France / Quebec</option>
+          <option value="ukraine">🇺🇦 Ukraine</option>
+          <option value="korea">🇰🇷 South Korea</option>
+          <option value="other">🌍 Other</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- LANGUAGE PREFERENCE (auto-populated) -->
+    <div class="fg" id="lang-section">
+      <label class="fl">YOUR LANGUAGES 🌐</label>
+      <div class="chips" id="lang-chips">
+        <button class="chip sel" onclick="toggleChip(this)">🇮🇳 Hindi</button>
+        <button class="chip sel" onclick="toggleChip(this)">🇬🇧 English</button>
+        <button class="chip" onclick="toggleChip(this)">🇮🇳 Punjabi</button>
+        <button class="chip" onclick="toggleChip(this)">🇮🇳 Tamil</button>
+      </div>
+    </div>
+
+    <div class="fg">
+      <label class="fl">CAREER GOALS</label>
+      <div class="chips">
+        <button class="chip sel" onclick="toggleChip(this)">🎓 Get Certified</button>
+        <button class="chip sel" onclick="toggleChip(this)">💼 Find Work</button>
+        <button class="chip" onclick="toggleChip(this)">🤝 Volunteer</button>
+        <button class="chip" onclick="toggleChip(this)">🌐 Network</button>
+        <button class="chip" onclick="toggleChip(this)">🔄 Switch Career</button>
+      </div>
+    </div>
+
+    <div class="fg">
+      <label class="fl">COMMUNITY MATCH PREFERENCE</label>
+      <div class="chips" id="community-chips">
+        <button class="chip sel-g chip" onclick="toggleChipG(this)">🌏 South Asian</button>
+        <button class="chip" onclick="toggleChipG(this)">🌙 Middle Eastern</button>
+        <button class="chip" onclick="toggleChipG(this)">🌎 Latin American</button>
+        <button class="chip" onclick="toggleChipG(this)">🌍 African</button>
+        <button class="chip" onclick="toggleChipG(this)">🇨🇳 East Asian</button>
+        <button class="chip" onclick="toggleChipG(this)">🌍 Any</button>
+      </div>
+    </div>
+
+    <div class="fg" style="background:rgba(255,193,7,.07);border:1px solid rgba(255,193,7,.18);border-radius:14px;padding:14px">
+      <label class="fl" style="color:#FFC107">✨ CULTURAL JOB MATCHING</label>
+      <p style="font-size:13px;color:#8892a4;line-height:1.5">ConnectHub will highlight jobs that value your language skills and cultural background — including bilingual roles, newcomer-friendly employers, and community-connected opportunities.</p>
+    </div>
+
+    <button class="btn-cta" onclick="go('screen-dashboard')">Continue →</button>
+    <div style="height:20px"></div>
+  </div>
+</div>
+
+<!-- ===================== DASHBOARD ===================== -->
+<div id="screen-dashboard" class="screen">
+  <div class="status-bar" style="background:var(--bg)"><span class="time">9:41</span><span>📶🔋</span></div>
+  <div class="dash-hd">
+    <div class="greet" id="dash-greet">Good morning ☀️</div>
+    <div class="name-row">
+      <span class="uname" id="dash-name">Venky Reddy</span>
+      <div class="hd-btns">
+        <button class="ic-btn" onclick="go('screen-notifications')">🔔<div class="nb"></div></button>
+        <button class="av-btn" onclick="go('screen-profile')" id="dash-avatar">VR</button>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-content" style="padding-bottom:8px">
+    <div class="srch">
+      <span>🔍</span>
+      <input type="text" placeholder="Search jobs, events, trainings…" onfocus="toast('Search opening…')" readonly>
+    </div>
+
+    <!-- CULTURAL MATCH BANNER -->
+    <div class="cult-banner" onclick="go('screen-opportunities');setOppTab_ext('cultural')">
+      <div class="cult-banner-icon" id="cult-icon">🇮🇳</div>
+      <div class="cult-banner-info">
+        <div class="cult-banner-title" id="cult-banner-title">Hindi-Matching Jobs Available</div>
+        <div class="cult-banner-sub" id="cult-banner-sub">8 roles that value your language & cultural background</div>
+      </div>
+      <div class="cult-arrow">→</div>
+    </div>
+
+    <div class="prog-card" onclick="go('screen-pathways')">
+      <div class="pc-lbl">YOUR CAREER PROGRESS</div>
+      <div class="pc-title">Civil Engineer Pathway 🏗️</div>
+      <div class="pc-track"><div class="pc-fill" style="width:42%"></div></div>
+      <div class="pc-foot"><b>42% complete</b><span>3 steps left</span></div>
+    </div>
+
+    <div class="section-title">Overview</div>
+    <div class="stats-grid">
+      <div class="sc" onclick="go('screen-opportunities')">
+        <div class="sc-icon">💼</div>
+        <div class="sc-num">12</div>
+        <div class="sc-lbl">Job Matches</div>
+      </div>
+      <div class="sc" onclick="go('screen-events')">
+        <div class="sc-icon">📅</div>
+        <div class="sc-num">5</div>
+        <div class="sc-lbl">Upcoming Events</div>
+      </div>
+      <div class="sc" onclick="go('screen-pathways')">
+        <div class="sc-icon">🎓</div>
+        <div class="sc-num">3</div>
+        <div class="sc-lbl">Certifications</div>
+      </div>
+      <div class="sc" onclick="go('screen-events')">
+        <div class="sc-icon">🤝</div>
+        <div class="sc-num">8</div>
+        <div class="sc-lbl">Connections</div>
+      </div>
+    </div>
+
+    <div class="section-title">Recent Activity</div>
+    <div class="act-item" onclick="go('screen-opportunities')">
+      <div class="act-ic" style="background:rgba(91,143,232,.1)">📋</div>
+      <div class="act-inf">
+        <div class="act-t">Applied to WSP Global</div>
+        <div class="act-s">Jr Civil Engineer · 2h ago</div>
+      </div>
+      <span class="badge b-pend">Pending</span>
+    </div>
+    <div class="act-item" onclick="go('screen-pathways')">
+      <div class="act-ic" style="background:rgba(52,199,138,.1)">🎓</div>
+      <div class="act-inf">
+        <div class="act-t">WES Evaluation Submitted</div>
+        <div class="act-s">Credential check · 1 day ago</div>
+      </div>
+      <span class="badge b-done">Done</span>
+    </div>
+    <div class="act-item" onclick="go('screen-events')">
+      <div class="act-ic" style="background:rgba(255,193,7,.1)">🌐</div>
+      <div class="act-inf">
+        <div class="act-t" id="last-act-event">South Asian Engineering Night</div>
+        <div class="act-s">Registered · Mar 6</div>
+      </div>
+      <span class="badge b-prog">Upcoming</span>
+    </div>
+    <div style="height:16px"></div>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-item active" onclick="nav('screen-dashboard',this)"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
+    <button class="nav-item" onclick="nav('screen-pathways',this)"><span class="nav-icon">🗺️</span><span class="nav-label">Pathway</span></button>
+    <button class="nav-item" onclick="nav('screen-opportunities',this)"><span class="nav-icon">💼</span><span class="nav-label">Jobs</span></button>
+    <button class="nav-item" onclick="nav('screen-events',this)"><span class="nav-icon">📅</span><span class="nav-label">Events</span></button>
+    <button class="nav-item" onclick="nav('screen-profile',this)"><span class="nav-icon">👤</span><span class="nav-label">Profile</span></button>
+  </div>
+</div>
+
+<!-- ===================== PATHWAYS ===================== -->
+<div id="screen-pathways" class="screen">
+  <div class="status-bar" style="background:var(--bg)"><span class="time">9:41</span><span>📶🔋</span></div>
+  <div class="ph"><span class="pt">Career Pathways</span><button class="flt-btn" onclick="toast('Filter panel opening…')">⚙️ Filter</button></div>
+  <div class="tabs">
+    <button class="tb on" onclick="filterPathway(this,'all')">All</button>
+    <button class="tb" onclick="filterPathway(this,'engineering')">Engineering</button>
+    <button class="tb" onclick="filterPathway(this,'tech')">IT &amp; Tech</button>
+    <button class="tb" onclick="filterPathway(this,'health')">Healthcare</button>
+    <button class="tb" onclick="filterPathway(this,'finance')">Finance</button>
+  </div>
+  <div class="scroll-content" id="pathway-list">
+    <div class="pw-card" data-cat="engineering">
+      <div class="pw-head">
+        <div class="pw-ic">🏗️</div>
+        <div class="pw-inf"><div class="pw-t">Civil Engineer (P.Eng)</div><div class="pw-s">84% match · 6 yrs intl. experience</div></div>
+        <span class="br br-g">Recommended</span>
+      </div>
+      <div class="pw-steps">
+        <div class="st-item"><div class="sn sn-done">✓</div><span class="sl">Credential Evaluation (WES)</span><span class="sb sb-done">Done</span></div>
+        <div class="st-item"><div class="sn sn-act">2</div><span class="sl">P.Eng Licensing Exams — PEO in progress</span><span class="sb sb-ip">In Progress</span></div>
+        <div class="st-item"><div class="sn sn-pend">3</div><span class="sl">Local Work Experience — 48 months supervised</span></div>
+        <div class="st-item"><div class="sn sn-pend">4</div><span class="sl">P.Eng License Granted</span></div>
+      </div>
+      <div class="pw-desc">Leverage your international background. Timeline: 3–6 months to first job.</div>
+    </div>
+    <div class="pw-card" data-cat="engineering">
+      <div class="pw-head">
+        <div class="pw-ic">🖥️</div>
+        <div class="pw-inf"><div class="pw-t">BIM / CAD Specialist</div><div class="pw-s">12 open paths · 3–6 months</div></div>
+        <span class="br br-o">Alternate</span>
+      </div>
+      <div class="pw-steps">
+        <div class="st-item"><div class="sn sn-pend">1</div><span class="sl">Autodesk Revit Certification</span></div>
+        <div class="st-item"><div class="sn sn-pend">2</div><span class="sl">BIM Portfolio Project</span></div>
+        <div class="st-item"><div class="sn sn-pend">3</div><span class="sl">Entry BIM Coordinator Role · $55k–$72k/yr</span></div>
+      </div>
+      <div class="pw-desc">Faster entry path using your existing CAD skills. No licensing required.</div>
+    </div>
+    <div class="pw-card" data-cat="tech">
+      <div class="pw-head">
+        <div class="pw-ic">💻</div>
+        <div class="pw-inf"><div class="pw-t">Full-Stack Developer</div><div class="pw-s">60% match — tech background helpful</div></div>
+        <span class="br br-o">Alternate</span>
+      </div>
+      <div class="pw-steps">
+        <div class="st-item"><div class="sn sn-pend">1</div><span class="sl">Complete a Bootcamp (React, Node.js)</span></div>
+        <div class="st-item"><div class="sn sn-pend">2</div><span class="sl">Build 3 Portfolio Projects on GitHub</span></div>
+        <div class="st-item"><div class="sn sn-pend">3</div><span class="sl">Land Junior Dev role · $65k–$80k/yr</span></div>
+      </div>
+      <div class="pw-desc">High-demand career with many newcomer-friendly employers in the GTA.</div>
+    </div>
+    <div style="height:12px"></div>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-item" onclick="nav('screen-dashboard',this)"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
+    <button class="nav-item active" onclick="nav('screen-pathways',this)"><span class="nav-icon">🗺️</span><span class="nav-label">Pathway</span></button>
+    <button class="nav-item" onclick="nav('screen-opportunities',this)"><span class="nav-icon">💼</span><span class="nav-label">Jobs</span></button>
+    <button class="nav-item" onclick="nav('screen-events',this)"><span class="nav-icon">📅</span><span class="nav-label">Events</span></button>
+    <button class="nav-item" onclick="nav('screen-profile',this)"><span class="nav-icon">👤</span><span class="nav-label">Profile</span></button>
+  </div>
+</div>
+
+<!-- ===================== OPPORTUNITIES ===================== -->
+<div id="screen-opportunities" class="screen">
+  <div class="status-bar" style="background:var(--bg)"><span class="time">9:41</span><span>📶🔋</span></div>
+  <div class="ph">
+    <span class="pt">Opportunities</span>
+    <div style="display:flex;gap:8px">
+      <button class="flt-btn" onclick="toast('Search opening…')">🔍</button>
+      <button class="flt-btn" onclick="toast('Filters opening…')">⚙️ Filter</button>
+    </div>
+  </div>
+  <div class="tabs" id="opp-tabs">
+    <button class="tb on" onclick="setOppTab(this,'jobs')">Jobs</button>
+    <button class="tb" onclick="setOppTab(this,'volunteer')">Volunteer</button>
+    <button class="tb" onclick="setOppTab(this,'training')">Training</button>
+    <button class="tb cultural-tab" onclick="setOppTab(this,'cultural')">✨ For You</button>
+  </div>
+  <div class="scroll-content" id="opp-content"></div>
+  <div class="bottom-nav">
+    <button class="nav-item" onclick="nav('screen-dashboard',this)"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
+    <button class="nav-item" onclick="nav('screen-pathways',this)"><span class="nav-icon">🗺️</span><span class="nav-label">Pathway</span></button>
+    <button class="nav-item active" onclick="nav('screen-opportunities',this)"><span class="nav-icon">💼</span><span class="nav-label">Jobs</span></button>
+    <button class="nav-item" onclick="nav('screen-events',this)"><span class="nav-icon">📅</span><span class="nav-label">Events</span></button>
+    <button class="nav-item" onclick="nav('screen-profile',this)"><span class="nav-icon">👤</span><span class="nav-label">Profile</span></button>
+  </div>
+</div>
+
+<!-- ===================== EVENTS ===================== -->
+<div id="screen-events" class="screen">
+  <div class="status-bar" style="background:var(--bg)"><span class="time">9:41</span><span>📶🔋</span></div>
+  <div class="ph"><span class="pt">Events &amp; Networking</span></div>
+  <div class="loc-row">📍 <b>Toronto</b></div>
+  <div class="tabs">
+    <button class="tb on" onclick="setEvTab(this,'all')">All</button>
+    <button class="tb cultural-tab" onclick="setEvTab(this,'community')">✨ My Community</button>
+    <button class="tb" onclick="setEvTab(this,'networking')">Networking</button>
+    <button class="tb" onclick="setEvTab(this,'training')">Training</button>
+    <button class="tb" onclick="setEvTab(this,'volunteer')">Volunteer</button>
+  </div>
+  <div class="scroll-content" id="events-content"></div>
+  <div class="bottom-nav">
+    <button class="nav-item" onclick="nav('screen-dashboard',this)"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
+    <button class="nav-item" onclick="nav('screen-pathways',this)"><span class="nav-icon">🗺️</span><span class="nav-label">Pathway</span></button>
+    <button class="nav-item" onclick="nav('screen-opportunities',this)"><span class="nav-icon">💼</span><span class="nav-label">Jobs</span></button>
+    <button class="nav-item active" onclick="nav('screen-events',this)"><span class="nav-icon">📅</span><span class="nav-label">Events</span></button>
+    <button class="nav-item" onclick="nav('screen-profile',this)"><span class="nav-icon">👤</span><span class="nav-label">Profile</span></button>
+  </div>
+</div>
+
+<!-- ===================== PROFILE ===================== -->
+<div id="screen-profile" class="screen">
+  <div class="status-bar" style="background:#142040"><span class="time">9:41</span><span>📶🔋</span></div>
+  <div class="scroll-content">
+    <div class="prof-hero">
+      <div class="av-lg" id="prof-av">VR</div>
+      <div class="prof-name" id="prof-name">Venky Reddy</div>
+      <div class="prof-role">Civil Engineer · Toronto, ON 🍁</div>
+      <div class="prof-tags">
+        <span class="ptag cult-tag" id="prof-cult-tag">🌏 South Asian</span>
+        <span class="ptag">6 yrs exp</span>
+        <span class="ptag">P.Eng Track</span>
+        <span class="ptag" id="prof-lang-tag">🇮🇳 Hindi</span>
+      </div>
+    </div>
+    <div style="padding:16px 20px 12px">
+      <div class="prof-stats">
+        <div class="ps"><div class="ps-num">12</div><div class="ps-lbl">Applications</div></div>
+        <div class="ps"><div class="ps-num">5</div><div class="ps-lbl">Events</div></div>
+        <div class="ps"><div class="ps-num">42%</div><div class="ps-lbl">Progress</div></div>
+      </div>
+    </div>
+    <div class="sk-sec">
+      <div class="sk-hd">
+        <span class="section-title" style="padding:0">Skills &amp; Expertise</span>
+        <button class="ed-btn" onclick="toast('Edit skills panel opened')">Edit</button>
+      </div>
+      <div class="sk-item"><div class="sk-row"><span class="sk-n">AutoCAD / BIM</span><span class="sk-p">85%</span></div><div class="sk-tr"><div class="sk-f" style="width:85%"></div></div></div>
+      <div class="sk-item"><div class="sk-row"><span class="sk-n">Structural Design</span><span class="sk-p">70%</span></div><div class="sk-tr"><div class="sk-f" style="width:70%"></div></div></div>
+      <div class="sk-item"><div class="sk-row"><span class="sk-n">Project Management</span><span class="sk-p">60%</span></div><div class="sk-tr"><div class="sk-f" style="width:60%"></div></div></div>
+    </div>
+    <div class="pref-sec">
+      <div class="section-title" style="padding:0 0 12px">Preferences &amp; Settings</div>
+      <div class="pref-item" onclick="toast('Language & Region settings opened')"><span class="pi-ic">🌐</span><span class="pi-lbl">Language &amp; Region</span><span class="pi-arr">›</span></div>
+      <div class="pref-item" onclick="toast('Cultural Match preferences opened')"><span class="pi-ic">✨</span><span class="pi-lbl">Cultural Match Settings</span><span class="pi-arr">›</span></div>
+      <div class="pref-item" onclick="go('screen-notifications')"><span class="pi-ic">🔔</span><span class="pi-lbl">Notifications</span><span class="pi-arr">›</span></div>
+      <div class="pref-item" onclick="toast('Privacy & Security settings opened')"><span class="pi-ic">🔒</span><span class="pi-lbl">Privacy &amp; Security</span><span class="pi-arr">›</span></div>
+      <div class="pref-item so" onclick="go('screen-splash')"><span class="pi-ic">🚪</span><span class="pi-lbl">Sign Out</span><span class="pi-arr" style="color:var(--red)">›</span></div>
+    </div>
+    <div style="height:16px"></div>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-item" onclick="nav('screen-dashboard',this)"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
+    <button class="nav-item" onclick="nav('screen-pathways',this)"><span class="nav-icon">🗺️</span><span class="nav-label">Pathway</span></button>
+    <button class="nav-item" onclick="nav('screen-opportunities',this)"><span class="nav-icon">💼</span><span class="nav-label">Jobs</span></button>
+    <button class="nav-item" onclick="nav('screen-events',this)"><span class="nav-icon">📅</span><span class="nav-label">Events</span></button>
+    <button class="nav-item active" onclick="nav('screen-profile',this)"><span class="nav-icon">👤</span><span class="nav-label">Profile</span></button>
+  </div>
+</div>
+
+<!-- ===================== NOTIFICATIONS ===================== -->
+<div id="screen-notifications" class="screen">
+  <div class="status-bar" style="background:var(--bg)"><span class="time">9:41</span><span>📶🔋</span></div>
+  <div class="nh">
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="back-btn" onclick="go('screen-dashboard')">←</button>
+      <span class="pt" style="font-size:20px">Notifications</span>
+    </div>
+    <button class="mar-btn" onclick="markAll()">Mark all read</button>
+  </div>
+  <div class="scroll-content">
+    <div class="ns-lbl">Today</div>
+    <div class="ni unread" onclick="markRead(this)"><div class="ni-iw" style="background:rgba(91,143,232,.1)">💼</div><div class="ni-inf"><div class="ni-t"><b>WSP Global</b> viewed your application</div><div class="ni-s">Junior Civil Engineer · 30 min ago</div></div><div class="ni-dot"></div></div>
+    <div class="ni unread" onclick="markRead(this)"><div class="ni-iw" style="background:rgba(52,199,138,.1)">🎓</div><div class="ni-inf"><div class="ni-t">New certification recommended: <b>PMP</b></div><div class="ni-s">Career pathway update · 1h ago</div></div><div class="ni-dot"></div></div>
+    <div class="ni unread" onclick="markRead(this)"><div class="ni-iw" style="background:rgba(255,193,7,.1)">✨</div><div class="ni-inf"><div class="ni-t" id="notif-cult">New <b>South Asian</b> professional event near you</div><div class="ni-s">Cultural match · 2h ago</div></div><div class="ni-dot"></div></div>
+    <div class="ns-lbl">Yesterday</div>
+    <div class="ni" onclick="markRead(this)"><div class="ni-iw" style="background:rgba(245,158,11,.1)">🤝</div><div class="ni-inf"><div class="ni-t"><b>Arjun Mehta</b> connected with you</div><div class="ni-s">Community match · Yesterday</div></div></div>
+    <div class="ni" onclick="markRead(this)"><div class="ni-iw" style="background:rgba(52,199,138,.1)">✅</div><div class="ni-inf"><div class="ni-t">Profile <b>80% complete</b> — add portfolio</div><div class="ni-s">Profile tips · Yesterday</div></div></div>
+    <div class="ni" onclick="markRead(this)"><div class="ni-iw" style="background:rgba(91,143,232,.1)">📋</div><div class="ni-inf"><div class="ni-t">Application submitted to <b>Stantec</b></div><div class="ni-s">Project Coordinator role · 2 days ago</div></div></div>
+    <div style="height:24px"></div>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-item" onclick="nav('screen-dashboard',this)"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
+    <button class="nav-item" onclick="nav('screen-pathways',this)"><span class="nav-icon">🗺️</span><span class="nav-label">Pathway</span></button>
+    <button class="nav-item" onclick="nav('screen-opportunities',this)"><span class="nav-icon">💼</span><span class="nav-label">Jobs</span></button>
+    <button class="nav-item" onclick="nav('screen-events',this)"><span class="nav-icon">📅</span><span class="nav-label">Events</span></button>
+    <button class="nav-item" onclick="nav('screen-profile',this)"><span class="nav-icon">👤</span><span class="nav-label">Profile</span></button>
+  </div>
+</div>
+
+<div class="toast" id="toast-el"></div>
+</div>
+
+<!-- DEMO SWITCHER -->
+<div class="demo-switcher">
+  <div class="ds-label">🎭 Demo: Switch Cultural Profile</div>
+  <div class="ds-row" id="ds-row">
+    <button class="ds-btn ds-on" onclick="setCulture('india',this)">🇮🇳 Indian</button>
+    <button class="ds-btn" onclick="setCulture('china',this)">🇨🇳 Chinese</button>
+    <button class="ds-btn" onclick="setCulture('pakistan',this)">🇵🇰 Pakistani</button>
+    <button class="ds-btn" onclick="setCulture('arab',this)">🇸🇦 Arab</button>
+    <button class="ds-btn" onclick="setCulture('philippines',this)">🇵🇭 Filipino</button>
+    <button class="ds-btn" onclick="setCulture('nigeria',this)">🇳🇬 Nigerian</button>
+    <button class="ds-btn" onclick="setCulture('france',this)">🇫🇷 French</button>
+    <button class="ds-btn" onclick="setCulture('ukraine',this)">🇺🇦 Ukrainian</button>
+    <button class="ds-btn" onclick="setCulture('korea',this)">🇰🇷 Korean</button>
+  </div>
+</div>
+
+<div style="text-align:center;margin-top:10px;color:rgba(255,255,255,.2);font-size:12px;font-family:sans-serif">
+  ConnectHub · UI Prototype · PRJ666 – Group 7
+</div>
+
+<script>
+// ===================== CULTURAL DATA MODEL =====================
+const cultures = {
+  india: {
+    flag:'🇮🇳', label:'South Asian', langs:['Hindi','Punjabi','Tamil','Telugu','English'],
+    langTag:'🇮🇳 Hindi', communityTag:'🌏 South Asian',
+    dashBannerTitle:'Hindi & South Asian Matching Jobs',
+    dashBannerSub:'9 roles that value your Hindi skills & cultural background',
+    dashIcon:'🇮🇳', lastEvent:'South Asian Engineering Night',
+    notifCult:'New <b>South Asian</b> professional event near you',
+    profAvatar:'VR', profName:'Venky Reddy',
+    jobs:[
+      { cm:95, title:'Bilingual Civil Engineer (Hindi/English)', co:'Aecon Group', logo:'🏗️', logoBg:'#1a3a1a',
+        tags:[['Bilingual Hindi/English','t-gold'],['Full-time','t-blue'],['Newcomer Friendly','t-green'],['⭐ Featured','t-orange']],
+        sal:'$68k–$82k/yr', posted:'1 day ago', cult:true, match:95 },
+      { cm:88, title:'Jr Civil Engineer – South Asian Hire Initiative', co:'City of Toronto', logo:'🏙️', logoBg:'#1a3460',
+        tags:[['South Asian Diversity Program','t-gold'],['Full-time','t-blue'],['Newcomer Friendly','t-green']],
+        sal:'$65k–$75k/yr', posted:'2 days ago', cult:true, match:88 },
+      { cm:72, title:'Project Coordinator – Infrastructure', co:'Stantec', logo:'🔧', logoBg:'#1a2a3a',
+        tags:[['Full-time','t-blue'],['Hybrid','t-gray']],
+        sal:'$68k–$72k/yr', posted:'3 days ago', cult:false, match:72 },
+      { cm:65, title:'Site Engineer (Contract)', co:'EllisDon', logo:'🏗️', logoBg:'#2a1a1a',
+        tags:[['Contract','t-orange'],['On-site','t-green']],
+        sal:'$35–$42/hr', posted:'1 week ago', cult:false, match:65 },
+    ],
+    events:[
+      { cult:true, featured:true, badge:'✨ Community Pick', title:'South Asian Engineering & Tech Night',
+        date:'Mar 6, 2026', venue:'MaRS Discovery District', tags:[['🌏 Community','t-gold'],['Networking','t-blue'],['Free','t-green']], mon:'MAR', day:'6' },
+      { cult:true, featured:false, badge:'Community', title:'Desi Professionals Mixer – Toronto',
+        sub:'🍵 Chai Networking · Scarborough Civic Centre', tags:[['🌏 South Asian','t-gold'],['Free','t-green']], mon:'MAR', day:'14' },
+      { cult:true, featured:false, badge:'Community', title:'India Canada Commerce Association Meetup',
+        sub:'📍 Downtown Toronto · ICCA', tags:[['🌏 Community','t-gold'],['Business','t-blue']], mon:'MAR', day:'21' },
+      { cult:false, featured:false, title:'P.Eng Exam Prep Workshop',
+        sub:'🌐 Online · Free · PEO', tags:[['Training','t-orange'],['Free','t-green']], mon:'MAR', day:'10' },
+      { cult:false, featured:false, title:'Career Fair – Tech & Engineering',
+        sub:'📍 Metro Toronto Convention Centre', tags:[['Networking','t-blue'],['$15 entry','t-orange']], mon:'MAR', day:'22' },
+    ]
+  },
+  china: {
+    flag:'🇨🇳', label:'East Asian', langs:['Mandarin','Cantonese','English'],
+    langTag:'🇨🇳 Mandarin', communityTag:'🇨🇳 East Asian',
+    dashBannerTitle:'Mandarin-Speaking Jobs Available',
+    dashBannerSub:'11 roles requiring or preferring Mandarin skills',
+    dashIcon:'🇨🇳', lastEvent:'Chinese Professionals Night – Toronto',
+    notifCult:'New <b>Chinese</b> professional event near you',
+    profAvatar:'LW', profName:'Li Wei',
+    jobs:[
+      { cm:98, title:'Bilingual Civil Engineer (Mandarin/English)', co:'China Communications Construction', logo:'🌉', logoBg:'#1a1a3a',
+        tags:[['Mandarin Required','t-gold'],['Full-time','t-blue'],['Newcomer Friendly','t-green'],['⭐ Top Match','t-orange']],
+        sal:'$70k–$88k/yr', posted:'1 day ago', cult:true, match:98 },
+      { cm:91, title:'Structural Engineer – Mandarin Asset', co:'WSP Global', logo:'🏢', logoBg:'#1a2a3a',
+        tags:[['Mandarin Asset','t-gold'],['Full-time','t-blue'],['Hybrid','t-gray']],
+        sal:'$72k–$85k/yr', posted:'2 days ago', cult:true, match:91 },
+      { cm:85, title:'Project Manager – China Market Liaison', co:'Aecon Group', logo:'🏗️', logoBg:'#1a3a1a',
+        tags:[['Mandarin Required','t-gold'],['Chinese Market','t-purple'],['Full-time','t-blue']],
+        sal:'$80k–$95k/yr', posted:'4 days ago', cult:true, match:85 },
+      { cm:60, title:'Site Engineer (Contract)', co:'EllisDon', logo:'🏗️', logoBg:'#2a1a1a',
+        tags:[['Contract','t-orange'],['On-site','t-green']],
+        sal:'$35–$42/hr', posted:'1 week ago', cult:false, match:60 },
+    ],
+    events:[
+      { cult:true, featured:true, badge:'✨ Community Pick', title:'Chinese Professionals Night – Toronto',
+        date:'Mar 7, 2026', venue:'Scarborough Town Centre', tags:[['🇨🇳 Chinese Community','t-gold'],['Networking','t-blue'],['Free','t-green']], mon:'MAR', day:'7' },
+      { cult:true, featured:false, title:'Mandarin Job Fair – Engineering & Tech',
+        sub:'📍 North York · Chinese Business Assoc.', tags:[['🇨🇳 Chinese Community','t-gold'],['Jobs Fair','t-blue']], mon:'MAR', day:'12' },
+      { cult:true, featured:false, title:'Canada-China Engineering Society Mixer',
+        sub:'🌐 Online · CCES', tags:[['🇨🇳 Community','t-gold'],['Free','t-green']], mon:'MAR', day:'18' },
+      { cult:false, featured:false, title:'P.Eng Exam Prep Workshop',
+        sub:'🌐 Online · Free · PEO', tags:[['Training','t-orange'],['Free','t-green']], mon:'MAR', day:'10' },
+      { cult:false, featured:false, title:'Career Fair – Tech & Engineering',
+        sub:'📍 Metro Toronto Convention Centre', tags:[['Networking','t-blue'],['$15 entry','t-orange']], mon:'MAR', day:'22' },
+    ]
+  },
+  pakistan: {
+    flag:'🇵🇰', label:'South Asian', langs:['Urdu','Punjabi','English'],
+    langTag:'🇵🇰 Urdu', communityTag:'🌙 South Asian / Pakistani',
+    dashBannerTitle:'Urdu-Speaking Jobs Available',
+    dashBannerSub:'7 roles that value your Urdu language skills',
+    dashIcon:'🇵🇰', lastEvent:'Pakistani Professionals Night – GTA',
+    notifCult:'New <b>Pakistani</b> professional event near you',
+    profAvatar:'AK', profName:'Ahmed Khan',
+    jobs:[
+      { cm:97, title:'Bilingual Engineer (Urdu/English)', co:'Hatch Ltd.', logo:'⚙️', logoBg:'#1a2a1a',
+        tags:[['Urdu Asset','t-gold'],['Full-time','t-blue'],['Newcomer Friendly','t-green'],['⭐ Top Match','t-orange']],
+        sal:'$67k–$80k/yr', posted:'Today', cult:true, match:97 },
+      { cm:89, title:'Project Engineer – South Asia Liaison', co:'SNC-Lavalin', logo:'🏗️', logoBg:'#1a3060',
+        tags:[['Urdu / Punjabi Asset','t-gold'],['Full-time','t-blue'],['Hybrid','t-gray']],
+        sal:'$72k–$85k/yr', posted:'2 days ago', cult:true, match:89 },
+      { cm:78, title:'Civil Engineer – Islamic Development Bank Projects', co:'ISL Engineering', logo:'🕌', logoBg:'#1a2a1a',
+        tags:[['Urdu Required','t-gold'],['Arabic Asset','t-purple'],['Full-time','t-blue']],
+        sal:'$70k–$82k/yr', posted:'3 days ago', cult:true, match:78 },
+      { cm:62, title:'Site Engineer (Contract)', co:'PCL Constructors', logo:'🏚️', logoBg:'#2a1a1a',
+        tags:[['Contract','t-orange'],['On-site','t-green']],
+        sal:'$38–$44/hr', posted:'1 week ago', cult:false, match:62 },
+    ],
+    events:[
+      { cult:true, featured:true, badge:'✨ Community Pick', title:'Pakistani Professionals Night – GTA',
+        date:'Mar 8, 2026', venue:'Mississauga Convention Centre', tags:[['🇵🇰 Pakistani Community','t-gold'],['Networking','t-blue'],['Free','t-green']], mon:'MAR', day:'8' },
+      { cult:true, featured:false, title:'South Asian Engineers Mixer – Urdu/Punjabi',
+        sub:'📍 Brampton · Community Hall', tags:[['🇵🇰 Community','t-gold'],['Free','t-green']], mon:'MAR', day:'15' },
+      { cult:true, featured:false, title:'Pakistan Canada Business Network',
+        sub:'📍 Downtown Toronto · PCBN HQ', tags:[['🇵🇰 Community','t-gold'],['Business','t-blue']], mon:'MAR', day:'20' },
+      { cult:false, featured:false, title:'P.Eng Exam Prep Workshop',
+        sub:'🌐 Online · Free · PEO', tags:[['Training','t-orange'],['Free','t-green']], mon:'MAR', day:'10' },
+      { cult:false, featured:false, title:'Career Fair – Tech & Engineering',
+        sub:'📍 Metro Toronto Convention Centre', tags:[['Networking','t-blue'],['$15 entry','t-orange']], mon:'MAR', day:'22' },
+    ]
+  },
+  arab: {
+    flag:'🇸🇦', label:'Arab / Middle Eastern', langs:['Arabic','English','French'],
+    langTag:'🌙 Arabic', communityTag:'🌙 Arab / Middle Eastern',
+    dashBannerTitle:'Arabic-Speaking Jobs Available',
+    dashBannerSub:'10 roles requiring or valuing Arabic fluency',
+    dashIcon:'🌙', lastEvent:'Arab Professionals Summit – Toronto',
+    notifCult:'New <b>Arab</b> professional event near you',
+    profAvatar:'MR', profName:'Mohamed Rashid',
+    jobs:[
+      { cm:99, title:'Bilingual Civil Engineer (Arabic/English)', co:'Aecon – MENA Division', logo:'🕌', logoBg:'#1a2a3a',
+        tags:[['Arabic Required','t-gold'],['Full-time','t-blue'],['Newcomer Friendly','t-green'],['⭐ Top Match','t-orange']],
+        sal:'$72k–$90k/yr', posted:'Today', cult:true, match:99 },
+      { cm:92, title:'Project Manager – Middle East Accounts', co:'SNC-Lavalin', logo:'🏗️', logoBg:'#1a3060',
+        tags:[['Arabic Required','t-gold'],['MENA Market','t-purple'],['Full-time','t-blue']],
+        sal:'$85k–$105k/yr', posted:'2 days ago', cult:true, match:92 },
+      { cm:80, title:'Structural Engineer – Arabic/French Bilingual', co:'WSP Global', logo:'🌐', logoBg:'#1a2040',
+        tags:[['Arabic + French Asset','t-gold'],['Full-time','t-blue'],['Hybrid','t-gray']],
+        sal:'$75k–$88k/yr', posted:'4 days ago', cult:true, match:80 },
+      { cm:58, title:'Site Engineer (Contract)', co:'EllisDon', logo:'🏗️', logoBg:'#2a1a1a',
+        tags:[['Contract','t-orange'],['On-site','t-green']],
+        sal:'$35–$42/hr', posted:'1 week ago', cult:false, match:58 },
+    ],
+    events:[
+      { cult:true, featured:true, badge:'✨ Community Pick', title:'Arab Professionals Summit – Toronto',
+        date:'Mar 9, 2026', venue:'Hilton Garden Inn Mississauga', tags:[['🌙 Arab Community','t-gold'],['Summit','t-blue'],['Networking','t-green']], mon:'MAR', day:'9' },
+      { cult:true, featured:false, title:'MENA Engineers & Architects Night',
+        sub:'📍 North York · Arab Community Centre', tags:[['🌙 Arab Community','t-gold'],['Free','t-green']], mon:'MAR', day:'13' },
+      { cult:true, featured:false, title:'Canadian Arab Federation – Career Fair',
+        sub:'📍 Scarborough · CAF Office', tags:[['🌙 Community','t-gold'],['Jobs Fair','t-blue']], mon:'MAR', day:'19' },
+      { cult:false, featured:false, title:'P.Eng Exam Prep Workshop',
+        sub:'🌐 Online · Free · PEO', tags:[['Training','t-orange'],['Free','t-green']], mon:'MAR', day:'10' },
+      { cult:false, featured:false, title:'Career Fair – Tech & Engineering',
+        sub:'📍 Metro Toronto Convention Centre', tags:[['Networking','t-blue'],['$15 entry','t-orange']], mon:'MAR', day:'22' },
+    ]
+  },
+  philippines: {
+    flag:'🇵🇭', label:'Filipino', langs:['Filipino','Tagalog','English','Ilocano'],
+    langTag:'🇵🇭 Filipino', communityTag:'🇵🇭 Filipino',
+    dashBannerTitle:'Filipino-Connected Jobs Available',
+    dashBannerSub:'6 roles that value Filipino background & Tagalog skills',
+    dashIcon:'🇵🇭', lastEvent:'Filipino Engineers & Nurses Night',
+    notifCult:'New <b>Filipino</b> professional event near you',
+    profAvatar:'JR', profName:'Jose Reyes',
+    jobs:[
+      { cm:95, title:'Civil Engineer – Filipino Newcomer Program', co:'City of Mississauga', logo:'🏙️', logoBg:'#1a3060',
+        tags:[['Filipino Diversity Program','t-gold'],['Full-time','t-blue'],['Newcomer Friendly','t-green'],['⭐ Top Match','t-orange']],
+        sal:'$62k–$75k/yr', posted:'Today', cult:true, match:95 },
+      { cm:85, title:'Project Coordinator – Tagalog/English', co:'Stantec', logo:'🔧', logoBg:'#1a2a3a',
+        tags:[['Tagalog Asset','t-gold'],['Full-time','t-blue'],['Hybrid','t-gray']],
+        sal:'$60k–$72k/yr', posted:'3 days ago', cult:true, match:85 },
+      { cm:70, title:'Structural Engineer – Entry Level', co:'WSP Global', logo:'🏢', logoBg:'#1a2040',
+        tags:[['Full-time','t-blue'],['Newcomer Friendly','t-green']],
+        sal:'$63k–$75k/yr', posted:'1 week ago', cult:false, match:70 },
+      { cm:60, title:'Site Engineer (Contract)', co:'EllisDon', logo:'🏗️', logoBg:'#2a1a1a',
+        tags:[['Contract','t-orange'],['On-site','t-green']],
+        sal:'$35–$42/hr', posted:'1 week ago', cult:false, match:60 },
+    ],
+    events:[
+      { cult:true, featured:true, badge:'✨ Community Pick', title:'Filipino Engineers & Nurses Professional Night',
+        date:'Mar 11, 2026', venue:'Philippine Consulate – Toronto', tags:[['🇵🇭 Filipino Community','t-gold'],['Networking','t-blue'],['Free','t-green']], mon:'MAR', day:'11' },
+      { cult:true, featured:false, title:'KAAPIT-BAHAY Filipino Career Fair',
+        sub:'📍 North York · Filipino Community Centre', tags:[['🇵🇭 Community','t-gold'],['Jobs Fair','t-blue']], mon:'MAR', day:'16' },
+      { cult:true, featured:false, title:'Pinoy Professional Network Monthly Meet',
+        sub:'🍜 Dinner + Networking · Scarborough', tags:[['🇵🇭 Community','t-gold'],['Free','t-green']], mon:'MAR', day:'23' },
+      { cult:false, featured:false, title:'P.Eng Exam Prep Workshop',
+        sub:'🌐 Online · Free · PEO', tags:[['Training','t-orange'],['Free','t-green']], mon:'MAR', day:'10' },
+      { cult:false, featured:false, title:'Career Fair – Tech & Engineering',
+        sub:'📍 Metro Toronto Convention Centre', tags:[['Networking','t-blue'],['$15 entry','t-orange']], mon:'MAR', day:'22' },
+    ]
+  },
+  nigeria: {
+    flag:'🇳🇬', label:'African', langs:['English','Yoruba','Igbo','Hausa'],
+    langTag:'🇳🇬 Yoruba', communityTag:'🌍 African',
+    dashBannerTitle:'African-Community Jobs Available',
+    dashBannerSub:'7 newcomer-friendly roles with African diversity programs',
+    dashIcon:'🇳🇬', lastEvent:'Nigerian & African Professionals Night',
+    notifCult:'New <b>African</b> professional event near you',
+    profAvatar:'OA', profName:'Olu Adeyemi',
+    jobs:[
+      { cm:94, title:'Civil Engineer – African Diversity Initiative', co:'Hatch Ltd.', logo:'⚙️', logoBg:'#1a2a1a',
+        tags:[['African Diversity Program','t-gold'],['Full-time','t-blue'],['Newcomer Friendly','t-green'],['⭐ Top Match','t-orange']],
+        sal:'$65k–$78k/yr', posted:'Today', cult:true, match:94 },
+      { cm:84, title:'Project Engineer – English/Yoruba Asset', co:'Jacobs', logo:'🌿', logoBg:'#1a2a1a',
+        tags:[['Multilingual Asset','t-gold'],['Full-time','t-blue']],
+        sal:'$60k–$74k/yr', posted:'2 days ago', cult:true, match:84 },
+      { cm:68, title:'Structural Engineer – Entry Level', co:'WSP Global', logo:'🏢', logoBg:'#1a2040',
+        tags:[['Full-time','t-blue'],['Newcomer Friendly','t-green']],
+        sal:'$62k–$73k/yr', posted:'5 days ago', cult:false, match:68 },
+      { cm:58, title:'Site Engineer (Contract)', co:'PCL', logo:'🏗️', logoBg:'#2a1a1a',
+        tags:[['Contract','t-orange'],['On-site','t-green']],
+        sal:'$33–$40/hr', posted:'1 week ago', cult:false, match:58 },
+    ],
+    events:[
+      { cult:true, featured:true, badge:'✨ Community Pick', title:'Nigerian & African Professionals Night – GTA',
+        date:'Mar 10, 2026', venue:'Afric House · North York', tags:[['🌍 African Community','t-gold'],['Networking','t-blue'],['Free','t-green']], mon:'MAR', day:'10' },
+      { cult:true, featured:false, title:'African Engineers Association of Canada',
+        sub:'📍 Toronto · AEAC Meetup', tags:[['🌍 African Community','t-gold'],['Professional','t-blue']], mon:'MAR', day:'17' },
+      { cult:true, featured:false, title:'West African Newcomers Career Connect',
+        sub:'🌐 Online + In-Person · Scarborough', tags:[['🌍 Community','t-gold'],['Free','t-green']], mon:'MAR', day:'24' },
+      { cult:false, featured:false, title:'P.Eng Exam Prep Workshop',
+        sub:'🌐 Online · Free · PEO', tags:[['Training','t-orange'],['Free','t-green']], mon:'MAR', day:'10' },
+      { cult:false, featured:false, title:'Career Fair – Tech & Engineering',
+        sub:'📍 Metro Toronto Convention Centre', tags:[['Networking','t-blue'],['$15 entry','t-orange']], mon:'MAR', day:'22' },
+    ]
+  },
+  france: {
+    flag:'🇫🇷', label:'French / Francophone', langs:['French','English'],
+    langTag:'🇫🇷 French', communityTag:'🇫🇷 Francophone',
+    dashBannerTitle:'French-Language Jobs Available',
+    dashBannerSub:'13 bilingual French/English roles in Ontario & Quebec',
+    dashIcon:'🇫🇷', lastEvent:'Alliance Française Engineers Social',
+    notifCult:'New <b>French</b> professional networking event',
+    profAvatar:'JP', profName:'Jean-Pierre Martin',
+    jobs:[
+      { cm:99, title:'Ingénieur Civil Bilingue (Fr/En)', co:'Infrastructure Ontario', logo:'🏛️', logoBg:'#1a2060',
+        tags:[['French Required','t-gold'],['Full-time','t-blue'],['Government','t-green'],['⭐ Top Match','t-orange']],
+        sal:'$73k–$92k/yr', posted:'Today', cult:true, match:99 },
+      { cm:93, title:'Bilingual Project Manager (French/English)', co:'SNC-Lavalin', logo:'🏗️', logoBg:'#1a3060',
+        tags:[['French Required','t-gold'],['Full-time','t-blue'],['Hybrid','t-gray']],
+        sal:'$82k–$100k/yr', posted:'1 day ago', cult:true, match:93 },
+      { cm:88, title:'Structural Engineer – Quebec Market', co:'WSP Global Montréal', logo:'🌐', logoBg:'#1a2040',
+        tags:[['French Asset','t-gold'],['Full-time','t-blue'],['Remote Option','t-green']],
+        sal:'$75k–$90k/yr', posted:'3 days ago', cult:true, match:88 },
+      { cm:62, title:'Site Engineer (Contract)', co:'EllisDon', logo:'🏗️', logoBg:'#2a1a1a',
+        tags:[['Contract','t-orange'],['On-site','t-green']],
+        sal:'$35–$42/hr', posted:'1 week ago', cult:false, match:62 },
+    ],
+    events:[
+      { cult:true, featured:true, badge:'✨ Community Pick', title:'Alliance Française Engineers & Tech Professionals Social',
+        date:'Mar 12, 2026', venue:'Alliance Française de Toronto', tags:[['🇫🇷 Francophone','t-gold'],['Networking','t-blue'],['Free','t-green']], mon:'MAR', day:'12' },
+      { cult:true, featured:false, title:'Réseau des Ingénieurs Francophones du Canada',
+        sub:'📍 Downtown Toronto · RIFC', tags:[['🇫🇷 Francophone','t-gold'],['Professional','t-blue']], mon:'MAR', day:'16' },
+      { cult:true, featured:false, title:'Salon de l\'Emploi – Professionnels Francophones',
+        sub:'🌐 Online · Collège Boréal', tags:[['🇫🇷 Community','t-gold'],['Jobs Fair','t-blue'],['Free','t-green']], mon:'MAR', day:'21' },
+      { cult:false, featured:false, title:'P.Eng Exam Prep Workshop',
+        sub:'🌐 Online · Free · PEO', tags:[['Training','t-orange'],['Free','t-green']], mon:'MAR', day:'10' },
+      { cult:false, featured:false, title:'Career Fair – Tech & Engineering',
+        sub:'📍 Metro Toronto Convention Centre', tags:[['Networking','t-blue'],['$15 entry','t-orange']], mon:'MAR', day:'22' },
+    ]
+  },
+  ukraine: {
+    flag:'🇺🇦', label:'Eastern European', langs:['Ukrainian','Russian','English'],
+    langTag:'🇺🇦 Ukrainian', communityTag:'🇺🇦 Ukrainian',
+    dashBannerTitle:'Ukrainian-Language Jobs Available',
+    dashBannerSub:'5 roles that support Ukrainian newcomers',
+    dashIcon:'🇺🇦', lastEvent:'Ukrainian Engineers Network Toronto',
+    notifCult:'New <b>Ukrainian</b> professional event near you',
+    profAvatar:'OB', profName:'Olena Bondar',
+    jobs:[
+      { cm:96, title:'Structural Engineer – Ukrainian Newcomer Program', co:'Thornton Tomasetti', logo:'🏛️', logoBg:'#1a2040',
+        tags:[['Ukrainian Support Program','t-gold'],['Full-time','t-blue'],['Newcomer Friendly','t-green'],['⭐ Top Match','t-orange']],
+        sal:'$70k–$85k/yr', posted:'Today', cult:true, match:96 },
+      { cm:87, title:'Civil Engineer – Bilingual (Ukrainian/English)', co:'MMM Group', logo:'🏗️', logoBg:'#1a3060',
+        tags:[['Ukrainian Asset','t-gold'],['Full-time','t-blue'],['Hybrid','t-gray']],
+        sal:'$68k–$80k/yr', posted:'2 days ago', cult:true, match:87 },
+      { cm:65, title:'Project Manager – Infrastructure', co:'Stantec', logo:'🔧', logoBg:'#1a2a3a',
+        tags:[['Full-time','t-blue'],['Hybrid','t-gray']],
+        sal:'$72k–$85k/yr', posted:'4 days ago', cult:false, match:65 },
+      { cm:55, title:'Site Engineer (Contract)', co:'EllisDon', logo:'🏗️', logoBg:'#2a1a1a',
+        tags:[['Contract','t-orange'],['On-site','t-green']],
+        sal:'$35–$42/hr', posted:'1 week ago', cult:false, match:55 },
+    ],
+    events:[
+      { cult:true, featured:true, badge:'✨ Community Pick', title:'Ukrainian Engineers & Architects Network Toronto',
+        date:'Mar 13, 2026', venue:'Ukrainian Cultural Centre', tags:[['🇺🇦 Ukrainian Community','t-gold'],['Networking','t-blue'],['Free','t-green']], mon:'MAR', day:'13' },
+      { cult:true, featured:false, title:'Ukrainian Newcomers Career Support Fair',
+        sub:'📍 Etobicoke · Ukrainian Hall', tags:[['🇺🇦 Community','t-gold'],['Jobs Fair','t-blue'],['Free','t-green']], mon:'MAR', day:'18' },
+      { cult:false, featured:false, title:'P.Eng Exam Prep Workshop',
+        sub:'🌐 Online · Free · PEO', tags:[['Training','t-orange'],['Free','t-green']], mon:'MAR', day:'10' },
+      { cult:false, featured:false, title:'Career Fair – Tech & Engineering',
+        sub:'📍 Metro Toronto Convention Centre', tags:[['Networking','t-blue'],['$15 entry','t-orange']], mon:'MAR', day:'22' },
+    ]
+  },
+  korea: {
+    flag:'🇰🇷', label:'East Asian', langs:['Korean','English'],
+    langTag:'🇰🇷 Korean', communityTag:'🇰🇷 Korean',
+    dashBannerTitle:'Korean-Speaking Jobs Available',
+    dashBannerSub:'8 bilingual Korean/English roles in GTA',
+    dashIcon:'🇰🇷', lastEvent:'Korean Professionals Night – Toronto',
+    notifCult:'New <b>Korean</b> professional event near you',
+    profAvatar:'KP', profName:'Kim Park',
+    jobs:[
+      { cm:97, title:'Civil Engineer – Korean/English Bilingual', co:'Samsung C&T Canada', logo:'📱', logoBg:'#1a2040',
+        tags:[['Korean Required','t-gold'],['Full-time','t-blue'],['Korean Corp.','t-purple'],['⭐ Top Match','t-orange']],
+        sal:'$72k–$90k/yr', posted:'Today', cult:true, match:97 },
+      { cm:88, title:'Project Engineer – Korea Market Liaison', co:'Aecon Group', logo:'🏗️', logoBg:'#1a3060',
+        tags:[['Korean Asset','t-gold'],['Full-time','t-blue'],['Hybrid','t-gray']],
+        sal:'$75k–$88k/yr', posted:'2 days ago', cult:true, match:88 },
+      { cm:72, title:'Structural Engineer – Entry Level', co:'WSP Global', logo:'🏢', logoBg:'#1a2040',
+        tags:[['Full-time','t-blue'],['Newcomer Friendly','t-green']],
+        sal:'$65k–$78k/yr', posted:'5 days ago', cult:false, match:72 },
+      { cm:60, title:'Site Engineer (Contract)', co:'EllisDon', logo:'🏗️', logoBg:'#2a1a1a',
+        tags:[['Contract','t-orange'],['On-site','t-green']],
+        sal:'$35–$42/hr', posted:'1 week ago', cult:false, match:60 },
+    ],
+    events:[
+      { cult:true, featured:true, badge:'✨ Community Pick', title:'Korean Professionals Night – Toronto',
+        date:'Mar 14, 2026', venue:'Korean Cultural Centre of Canada', tags:[['🇰🇷 Korean Community','t-gold'],['Networking','t-blue'],['Free','t-green']], mon:'MAR', day:'14' },
+      { cult:true, featured:false, title:'Korean Canadian Engineers Association Meetup',
+        sub:'📍 North York · KCEA HQ', tags:[['🇰🇷 Community','t-gold'],['Professional','t-blue']], mon:'MAR', day:'19' },
+      { cult:true, featured:false, title:'KTOWN Professional Networking Dinner',
+        sub:'🍱 Dinner + Networking · K-Town Toronto', tags:[['🇰🇷 Community','t-gold'],['Free','t-green']], mon:'MAR', day:'25' },
+      { cult:false, featured:false, title:'P.Eng Exam Prep Workshop',
+        sub:'🌐 Online · Free · PEO', tags:[['Training','t-orange'],['Free','t-green']], mon:'MAR', day:'10' },
+      { cult:false, featured:false, title:'Career Fair – Tech & Engineering',
+        sub:'📍 Metro Toronto Convention Centre', tags:[['Networking','t-blue'],['$15 entry','t-orange']], mon:'MAR', day:'22' },
+    ]
+  }
+};
+
+let activeCulture = 'india';
+let currentOppTab = 'jobs';
+let currentEvTab = 'all';
+
+// ===================== NAVIGATION =====================
+function go(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const s = document.getElementById(id);
+  if (s) s.classList.add('active');
+  const sc = s && s.querySelector('.scroll-content');
+  if (sc) sc.scrollTop = 0;
+  if (id === 'screen-opportunities') renderJobs(currentOppTab);
+  if (id === 'screen-events') renderEvents(currentEvTab);
+}
+
+function nav(id, btn) {
+  go(id);
+  const nav = btn.closest('.bottom-nav');
+  if (nav) { nav.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
+}
+
+// ===================== TOAST =====================
+function toast(msg, col) {
+  const t = document.getElementById('toast-el');
+  t.textContent = msg;
+  t.style.background = col || '#34C78A';
+  t.style.boxShadow = col ? '0 8px 24px rgba(0,0,0,.3)' : '0 8px 24px rgba(52,199,138,.3)';
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// ===================== CULTURE =====================
+function setCulture(key, btn) {
+  activeCulture = key;
+  const c = cultures[key];
+
+  // Update demo switcher
+  document.querySelectorAll('.ds-btn').forEach(b => b.classList.remove('ds-on'));
+  btn.classList.add('ds-on');
+
+  // Dashboard
+  document.getElementById('cult-icon').textContent = c.dashIcon;
+  document.getElementById('cult-banner-title').textContent = c.dashBannerTitle;
+  document.getElementById('cult-banner-sub').textContent = c.dashBannerSub;
+  document.getElementById('last-act-event').textContent = c.lastEvent;
+  document.getElementById('dash-name').textContent = c.profName;
+  document.getElementById('dash-avatar').textContent = c.profAvatar;
+
+  // Profile
+  document.getElementById('prof-av').textContent = c.profAvatar;
+  document.getElementById('prof-name').textContent = c.profName;
+  document.getElementById('prof-cult-tag').textContent = c.flag + ' ' + c.label;
+  document.getElementById('prof-lang-tag').textContent = c.langTag;
+
+  // Notification
+  document.getElementById('notif-cult').innerHTML = c.notifCult;
+
+  // Re-render active screens
+  const opp = document.getElementById('screen-opportunities');
+  if (opp && opp.classList.contains('active')) renderJobs(currentOppTab);
+  const ev = document.getElementById('screen-events');
+  if (ev && ev.classList.contains('active')) renderEvents(currentEvTab);
+
+  toast(c.flag + ' Switched to ' + c.label + ' profile!', '#5B8FE8');
+}
+
+function onboardCultureChange(sel) {
+  const key = sel.value;
+  const c = cultures[key];
+  if (!c) return;
+  const langMap = {
+    india:['🇮🇳 Hindi','🇬🇧 English','🇮🇳 Punjabi','🇮🇳 Tamil'],
+    china:['🇨🇳 Mandarin','🇨🇳 Cantonese','🇬🇧 English'],
+    pakistan:['🇵🇰 Urdu','🇵🇰 Punjabi','🇬🇧 English'],
+    arab:['🌙 Arabic','🇬🇧 English','🇫🇷 French'],
+    philippines:['🇵🇭 Filipino','🇵🇭 Tagalog','🇬🇧 English'],
+    nigeria:['🇳🇬 Yoruba','🇳🇬 Igbo','🇬🇧 English'],
+    france:['🇫🇷 French','🇬🇧 English'],
+    ukraine:['🇺🇦 Ukrainian','🇬🇧 English'],
+    korea:['🇰🇷 Korean','🇬🇧 English'],
+    other:['🌍 Your Language','🇬🇧 English']
+  };
+  const langs = langMap[key] || langMap.other;
+  const lc = document.getElementById('lang-chips');
+  lc.innerHTML = langs.map((l,i) => `<button class="chip ${i<2?'sel':''}" onclick="toggleChip(this)">${l}</button>`).join('');
+}
+
+// ===================== JOBS RENDERER =====================
+function renderJobs(tab) {
+  currentOppTab = tab;
+  const c = cultures[activeCulture];
+  const container = document.getElementById('opp-content');
+
+  // Update tab active state
+  document.querySelectorAll('#opp-tabs .tb').forEach(b => b.classList.remove('on'));
+  const tabs = document.querySelectorAll('#opp-tabs .tb');
+  const tabMap = {jobs:0,volunteer:1,training:2,cultural:3};
+  if (tabs[tabMap[tab]]) tabs[tabMap[tab]].classList.add('on');
+
+  if (tab === 'volunteer') {
+    container.innerHTML = `
+      <div style="padding:4px 20px 12px;font-size:12px;color:#3d4f66">3 volunteer opportunities matching your background</div>
+      ${volCard('Infrastructure Volunteer Day','Don Valley · Full day',['🌿 Outdoor','t-green'],'Mar 19')}
+      ${volCard('Habitat for Humanity Build Day','Scarborough · Sat 8am–4pm',['🏠 Building','t-blue'],'Mar 26')}
+      ${volCard('New Canadians Centre – Mentor','Peterborough · Weekly',['🤝 Mentoring','t-purple'],'Ongoing')}
+      <div style="height:12px"></div>`;
+    return;
+  }
+  if (tab === 'training') {
+    container.innerHTML = `
+      <div style="padding:4px 20px 12px;font-size:12px;color:#3d4f66">7 training programs for your career pathway</div>
+      ${trainCard('PMP Certification Prep','PMI · Online · 6 weeks','t-orange','Mar 15')}
+      ${trainCard('Revit BIM Fundamentals','Autodesk · Online · Self-paced','t-blue','Anytime')}
+      ${trainCard('AutoCAD Advanced','George Brown · In-person','t-purple','Apr 1')}
+      <div style="height:12px"></div>`;
+    return;
+  }
+
+  const isCultural = tab === 'cultural';
+  const jobs = isCultural
+    ? c.jobs.filter(j => j.cult).concat(c.jobs.filter(j => !j.cult))
+    : c.jobs;
+
+  let html = '';
+  if (isCultural) {
+    html += `<div style="padding:4px 20px 12px;font-size:12px;color:#3d4f66">${c.flag} Showing jobs that match your <b style="color:#FFC107">${c.label}</b> background</div>`;
+    html += `<div style="margin:0 20px 12px;background:rgba(255,193,7,.07);border:1px solid rgba(255,193,7,.15);border-radius:14px;padding:13px 15px">
+      <div style="font-size:12px;color:#FFC107;font-weight:700;margin-bottom:4px">✨ Cultural Match Active</div>
+      <div style="font-size:12px;color:#8892a4;line-height:1.5">Jobs are sorted by how well they match your language skills (${c.langs.slice(0,2).join(', ')}) and cultural background.</div>
+    </div>`;
+  } else {
+    html += `<div style="padding:4px 20px 12px;font-size:12px;color:#3d4f66">12 matches for <b style="color:#fff">Civil Engineer</b> in Toronto</div>`;
+  }
+
+  jobs.forEach(j => { html += jobCard(j, isCultural); });
+  html += '<div style="height:12px"></div>';
+  container.innerHTML = html;
+}
+
+function jobCard(j, showMatch) {
+  const tags = j.tags.map(([t,cls]) => `<span class="tag ${cls}">${t}</span>`).join('');
+  const match = showMatch ? `<div class="cmatch"><span>${j.cm}% cultural match</span><div class="cmatch-bar"><div class="cmatch-fill" style="width:${j.cm}%"></div></div></div>` : '';
+  return `<div class="jc${j.cult?' cultural-match':''}">
+    <div class="jc-head">
+      <div class="co-logo" style="background:${j.logoBg}">${j.logo}</div>
+      <div class="jc-info"><div class="jt">${j.title}</div><div class="jco">${j.co}</div></div>
+      <button class="bk" onclick="event.stopPropagation();toggleBk(this)">🔖</button>
+    </div>
+    ${match}
+    <div class="tags">${tags}</div>
+    <div class="jc-foot">
+      <div><div class="sal">${j.sal}</div><div class="posted">📌 ${j.posted}</div></div>
+      <button class="apply-btn" onclick="toast('Applied to ${j.co.replace(/'/g,"\\'")}! ✓')">Apply Now</button>
+    </div>
+  </div>`;
+}
+
+function volCard(title, sub, tag, date) {
+  return `<div class="jc"><div class="jc-head"><div class="co-logo" style="background:#1a3a1a">🌿</div><div class="jc-info"><div class="jt">${title}</div><div class="jco">${sub}</div></div></div><div class="tags"><span class="tag ${tag[1]}">${tag[0]}</span><span class="tag t-gray">📅 ${date}</span></div><div class="jc-foot"><div class="sal" style="font-size:13px;color:#34C78A">Free · Volunteer</div><button class="apply-btn" onclick="toast('Registered for volunteer! ✓')">Register</button></div></div>`;
+}
+
+function trainCard(title, sub, cls, start) {
+  return `<div class="jc"><div class="jc-head"><div class="co-logo" style="background:#1a1a3a">📚</div><div class="jc-info"><div class="jt">${title}</div><div class="jco">${sub}</div></div></div><div class="tags"><span class="tag ${cls}">Training</span><span class="tag t-gray">📅 Starts ${start}</span></div><div class="jc-foot"><div class="sal">View Program</div><button class="apply-btn" onclick="toast('Enrolled in ${title}! ✓')">Enroll</button></div></div>`;
+}
+
+// ===================== EVENTS RENDERER =====================
+function renderEvents(tab) {
+  currentEvTab = tab;
+  const c = cultures[activeCulture];
+  const container = document.getElementById('events-content');
+
+  // Update tab active state
+  document.querySelectorAll('#screen-events .tabs .tb').forEach(b => b.classList.remove('on'));
+  const tabBtns = document.querySelectorAll('#screen-events .tabs .tb');
+  const tabMap = {all:0,community:1,networking:2,training:3,volunteer:4};
+  if (tabBtns[tabMap[tab]]) tabBtns[tabMap[tab]].classList.add('on');
+
+  let events = c.events;
+  if (tab === 'community') events = c.events.filter(e => e.cult);
+  else if (tab === 'networking') events = c.events.filter(e => e.tags && e.tags.some(t => t[0].toLowerCase().includes('network')));
+  else if (tab === 'training') events = c.events.filter(e => e.tags && e.tags.some(t => t[0].toLowerCase().includes('train')));
+  else if (tab === 'volunteer') events = c.events.filter(e => e.tags && e.tags.some(t => t[0].toLowerCase().includes('volunteer')));
+
+  let html = '';
+  events.forEach((ev, idx) => {
+    if (ev.featured || idx === 0) {
+      html += featuredEvent(ev, c);
+    } else {
+      html += smallEvent(ev);
+    }
+  });
+  if (!events.length) html = `<div style="padding:40px 20px;text-align:center;color:#3d4f66;font-size:14px">No ${tab} events found for your filters.</div>`;
+  html += '<div style="height:12px"></div>';
+  container.innerHTML = html;
+}
+
+function featuredEvent(ev, c) {
+  const tags = ev.tags ? ev.tags.map(([t,cls]) => `<span class="tag ${cls}" style="font-size:12px">${t}</span>`).join('') : '';
+  const isCult = ev.cult;
+  return `<div class="ev-card${isCult?' cult-ev':''}">
+    <div class="ev-feat${isCult?' cult-feat':''}">
+      <div class="ev-week${isCult?' cult-week':''}">${ev.badge || '🗓️ This Week'}</div>
+      <div class="ev-title">${ev.title}</div>
+      <div class="ev-meta">
+        <span class="ev-mi">📅 ${ev.date}</span>
+        <span class="ev-mi">📍 ${ev.venue}</span>
+      </div>
+      <div style="display:flex;gap:7px;align-items:center;margin-bottom:14px">${tags}</div>
+      <button class="${isCult?'reg-btn gold':'reg-btn'}" onclick="toast('Registered for event! ✓')">Register →</button>
+    </div>
+  </div>`;
+}
+
+function smallEvent(ev) {
+  const tags = ev.tags ? ev.tags.map(([t,cls]) => `<span class="tag ${cls}">${t}</span>`).join('') : '';
+  const isCult = ev.cult;
+  return `<div class="ev-card${isCult?' cult-ev':''}">
+    <div class="ev-sm${isCult?' cult-sm':''}">
+      <div class="ev-date-box${isCult?' gold-box':''}">
+        <div class="ev-mon${isCult?' gold-text':''}">${ev.mon}</div>
+        <div class="ev-day">${ev.day}</div>
+      </div>
+      <div class="ev-si">
+        <div class="ev-st">${ev.title}</div>
+        <div class="ev-ss">${ev.sub || ''}</div>
+        <div class="ev-stags">${tags}</div>
+      </div>
+      <button class="int-btn" onclick="toast('Added to calendar! ✓')">+</button>
+    </div>
+  </div>`;
+}
+
+// ===================== TAB HANDLERS =====================
+function setOppTab(btn, tab) {
+  document.querySelectorAll('#opp-tabs .tb').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  renderJobs(tab);
+}
+
+function setOppTab_ext(tab) {
+  currentOppTab = tab;
+  if (document.getElementById('screen-opportunities').classList.contains('active')) renderJobs(tab);
+}
+
+function setEvTab(btn, tab) {
+  document.querySelectorAll('#screen-events .tabs .tb').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  renderEvents(tab);
+}
+
+function filterPathway(btn, cat) {
+  btn.closest('.tabs').querySelectorAll('.tb').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.querySelectorAll('#pathway-list .pw-card').forEach(c => {
+    c.style.display = (cat === 'all' || c.dataset.cat === cat) ? '' : 'none';
+  });
+}
+
+// ===================== MISC =====================
+function toggleChip(el) { el.classList.toggle('sel'); }
+function toggleChipG(el) { el.classList.toggle('sel-g'); }
+function toggleBk(btn) {
+  btn.classList.toggle('saved');
+  toast(btn.classList.contains('saved') ? 'Job bookmarked! 🔖' : 'Bookmark removed');
+}
+function markRead(item) {
+  item.classList.remove('unread');
+  const d = item.querySelector('.ni-dot'); if (d) d.remove();
+}
+function markAll() {
+  document.querySelectorAll('.ni.unread').forEach(markRead);
+  toast('All notifications marked as read ✓');
+}
+
+// ===================== INIT =====================
+renderJobs('jobs');
+renderEvents('all');
+</script>
+</body>
+</html>
